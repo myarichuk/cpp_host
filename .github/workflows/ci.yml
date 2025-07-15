@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push: { branches: [main] }
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-14]
+        build_type: [Debug, Release]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Init submodules
+        run: git submodule update --init --recursive
+      - name: Set up vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: "${{ runner.temp }}/vcpkg"
+          vcpkgJsonGlob: "vcpkg.json"
+
+      - name: Configure
+        run: >
+          cmake -B build
+                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+                -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+                -DGH_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

@@ -1,0 +1,71 @@
+# -------------------------------------------------------------
+#  C / C++ / CMake
+# -------------------------------------------------------------
+# Generated build output
+/build/
+/build-*/
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+compile_commands.json
+
+# Ninja
+.ninja_log
+.ninja_deps
+rules.ninja
+build.ninja
+
+# Visual Studio (if someone opens the folder there)
+*.vcxproj*
+*.opensdf
+*.sdf
+*.user
+*.VC.db
+/*.tlog/
+ipch/
+.vs/
+
+# CLion / JetBrains
+.idea/
+cmake-build-*/
+
+# Xcode
+*.xcworkspace
+*.xcodeproj
+*.xcuserdata
+
+# -------------------------------------------------------------
+#  vcpkg (sub-module) – keep sources, drop build artefacts
+# -------------------------------------------------------------
+/external/vcpkg/buildtrees/
+/external/vcpkg/downloads/
+/external/vcpkg/packages/
+/external/vcpkg/installed/
+/external/vcpkg/out/
+
+# -------------------------------------------------------------
+#  Editors / OS cruft
+# -------------------------------------------------------------
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.cache/
+.Trash-*/
+
+# VS Code
+.vscode/
+
+# Sublime / Atom
+*.sublime-*
+/.vscode-test/
