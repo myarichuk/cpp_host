@@ -17,7 +17,7 @@ target_include_directories(generic_host PUBLIC
         $<INSTALL_INTERFACE:include>
 )
 
-find_package(Boost REQUIRED COMPONENTS asio system)
+find_package(Boost CONFIG REQUIRED COMPONENTS asio system)
 find_package(spdlog REQUIRED)
 
 target_link_libraries(generic_host
