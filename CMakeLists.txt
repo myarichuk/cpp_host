@@ -17,12 +17,16 @@ target_include_directories(generic_host PUBLIC
         $<INSTALL_INTERFACE:include>
 )
 
-find_package(Boost REQUIRED COMPONENTS asio system)
+find_package(Boost REQUIRED CONFIG COMPONENTS asio system)
 find_package(spdlog REQUIRED)
 
 target_link_libraries(generic_host
         PUBLIC Boost::asio Boost::system spdlog::spdlog_header_only
 )
+
+if(WIN32)
+    target_link_libraries(generic_host PRIVATE ws2_32)
+endif()
 
 # -- Example executable -------------------
 add_executable(log_indexer_example examples/log_indexer.cpp)
@@ -30,6 +34,7 @@ target_link_libraries(log_indexer_example PRIVATE generic_host)
 
 # -- Tests -----------
 if(GH_BUILD_TESTS)
+    enable_testing()
     find_package(Catch2 REQUIRED)
     file(GLOB_RECURSE GH_TEST_SOURCES CONFIGURE_DEPENDS tests/*.cpp)
     add_executable(generic_host_tests ${GH_TEST_SOURCES})
