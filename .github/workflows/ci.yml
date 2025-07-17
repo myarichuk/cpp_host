@@ -5,13 +5,8 @@ on:
   pull_request:
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-24.04, windows-2022, macos-14]
-        build_type: [Debug, Release]
-
+  linux-gcc:
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Init submodules
@@ -21,16 +16,65 @@ jobs:
         with:
           vcpkgDirectory: "${{ runner.temp }}/vcpkg"
           vcpkgJsonGlob: "vcpkg.json"
-
       - name: Configure
-        run: >
-          cmake -B build
-                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-                -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
-                -DGH_BUILD_TESTS=ON
-
+        run: cmake --preset linux-gcc
       - name: Build
-        run: cmake --build build --parallel
-
+        run: cmake --build build/linux-gcc --parallel
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build/linux-gcc --output-on-failure
+
+  linux-clang:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Init submodules
+        run: git submodule update --init --recursive
+      - name: Install Clang
+        run: sudo apt-get update && sudo apt-get install -y clang
+      - name: Set up vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: "${{ runner.temp }}/vcpkg"
+          vcpkgJsonGlob: "vcpkg.json"
+      - name: Configure
+        run: cmake --preset linux-clang
+      - name: Build
+        run: cmake --build build/linux-clang --parallel
+      - name: Test
+        run: ctest --test-dir build/linux-clang --output-on-failure
+
+  windows-msvc:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Init submodules
+        run: git submodule update --init --recursive
+      - name: Set up vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: "${{ runner.temp }}/vcpkg"
+          vcpkgJsonGlob: "vcpkg.json"
+      - name: Configure
+        run: cmake --preset windows-msvc
+      - name: Build
+        run: cmake --build build/windows-msvc --parallel --config Release
+      - name: Test
+        run: ctest --test-dir build/windows-msvc --output-on-failure --config Release
+
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Init submodules
+        run: git submodule update --init --recursive
+      - name: Set up vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: "${{ runner.temp }}/vcpkg"
+          vcpkgJsonGlob: "vcpkg.json"
+      - name: Configure
+        run: cmake --preset macos
+      - name: Build
+        run: cmake --build build/macos --parallel
+      - name: Test
+        run: ctest --test-dir build/macos --output-on-failure
