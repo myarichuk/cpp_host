@@ -7,6 +7,89 @@ TOOLCHAIN_FILE="$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake"
 BUILD_DIR="build"
 BUILD_TYPE="Debug"
 
+detect_os() {
+    case "$(uname -s)" in
+        Linux)
+            if ! command -v apt-get >/dev/null 2>&1; then
+                echo "Unsupported Linux distribution: apt-get not found" >&2
+                exit 1
+            fi
+            OS_TYPE=linux
+            ;;
+        Darwin)
+            if ! command -v brew >/dev/null 2>&1; then
+                echo "Homebrew is required but not found. Install from https://brew.sh/" >&2
+                exit 1
+            fi
+            OS_TYPE=macos
+            ;;
+        *)
+            echo "Unsupported operating system: $(uname -s)" >&2
+            exit 1
+            ;;
+    esac
+}
+
+install_packages() {
+    case "$OS_TYPE" in
+        linux)
+            sudo apt-get update
+            sudo apt-get install -y git build-essential cmake curl pkg-config unzip tar
+            ;;
+        macos)
+            brew update
+            brew install git cmake curl
+            ;;
+    esac
+}
+
+install_python() {
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo ">>> Installing Python..."
+        case "$OS_TYPE" in
+            linux)
+                sudo apt-get update
+                sudo apt-get install -y python3 python3-pip
+                ;;
+            macos)
+                brew install python
+                ;;
+        esac
+    fi
+}
+
+install_conan() {
+    if ! command -v conan >/dev/null 2>&1; then
+        echo ">>> Installing Conan..."
+        case "$OS_TYPE" in
+            linux)
+                sudo apt-get install -y python3-pip
+                python3 -m pip install --user conan
+                ;;
+            macos)
+                brew install python || true
+                python3 -m pip install --user conan
+                ;;
+        esac
+    fi
+}
+
+realpath_f() {
+    if command -v realpath >/dev/null 2>&1; then
+        realpath "$1"
+    else
+        python3 - "$1" <<'EOF'
+import os,sys
+print(os.path.realpath(sys.argv[1]))
+EOF
+    fi
+}
+
+detect_os
+install_packages
+install_python
+install_conan
+
 echo ">>> Bootstrapping vcpkg..."
 
 # Clone vcpkg if it isn't already there
@@ -19,7 +102,8 @@ fi
 "$VCPKG_DIR/bootstrap-vcpkg.sh" -disableMetrics
 
 # Export VCPKG_ROOT so IDEs/CMake-presets can discover it
-export VCPKG_ROOT="$(realpath "$VCPKG_DIR")"
+VCPKG_ROOT="$(realpath_f "$VCPKG_DIR")"
+export VCPKG_ROOT
 
 echo ">>> Configuring CMake..."
 cmake -S . -B "$BUILD_DIR" \
