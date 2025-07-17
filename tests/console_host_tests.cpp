@@ -20,9 +20,9 @@ public:
         logs.clear();
     }
 
-    bool ContainsMessage(const LogLevel level, const std::string& substring) const {
-        for (const auto& entry : logs) {
-            if (entry.level == level && entry.message.find(substring) != std::string::npos) {
+    bool ContainsMessage(const LogLevel level, const std::string &substring) const {
+        for (const auto&[level, message] : logs) {
+            if (level == level && message.find(substring) != std::string::npos) {
                 return true;
             }
         }
