@@ -17,6 +17,10 @@ target_include_directories(generic_host PUBLIC
         $<INSTALL_INTERFACE:include>
 )
 
+if(APPLE)
+    target_compile_definitions(generic_host PUBLIC BOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED)
+endif()
+
 find_package(Boost REQUIRED CONFIG COMPONENTS asio system)
 find_package(spdlog REQUIRED)
 
