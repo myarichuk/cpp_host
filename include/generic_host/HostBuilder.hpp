@@ -2,8 +2,8 @@
 #include <vector>
 #include <memory>
 #include <functional>
-#include "IHostedService.hpp"
-#include "ILogger.hpp"
+#include <generic_host/IHostedService.hpp>
+#include <generic_host/ILogger.hpp>
 
 namespace generic_host {
 

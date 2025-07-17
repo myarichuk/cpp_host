@@ -1,5 +1,5 @@
-#include "../src/generic_host/HostBuilder.hpp"
-#include "../src/generic_host/IHostedService.hpp"
+#include <generic_host/HostBuilder.hpp>
+#include <generic_host/IHostedService.hpp>
 #include <spdlog/spdlog.h>
 #include <memory>
 
