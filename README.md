@@ -3,3 +3,16 @@
 This repository contains the `generic_host` C++ library and example projects.
 
 The code in this project is available under the terms of the [MIT License](LICENSE).
+
+## Running the tests
+
+The CMake build does not enable tests by default. To build and run them, configure the project with `GH_BUILD_TESTS` set to `ON`:
+
+```bash
+cmake -S . -B build -DGH_BUILD_TESTS=ON
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+The `catch_discover_tests` helper in `CMakeLists.txt` registers each Catch2 test case individually so `ctest` will list them all.
+
