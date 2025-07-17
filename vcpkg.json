@@ -1,13 +1,20 @@
 {
-  "name" : "generic-host-cpp",
-  "version-string" : "0.1.0",
-  "description" : "Cross-platform .NET-style hosting abstraction for C++",
-  "license" : "MIT",
-  "dependencies" : [ "boost-asio","boost-system", "spdlog", "catch2" ],
-  "features" : {
-    "tests" : {
-      "description" : "Enable Catch2 tests",
-      "dependencies" : [ "catch2" ]
+  "name": "generic-host-cpp",
+  "version-string": "0.1.0",
+  "description": "Cross-platform .NET-style hosting abstraction for C++",
+  "license": "MIT",
+  "dependencies": [
+    "boost-asio",
+    "boost-system",
+    "spdlog",
+    "catch2"
+  ],
+  "features": {
+    "tests": {
+      "description": "Enable Catch2 tests",
+      "dependencies": [
+        "catch2"
+      ]
     }
   }
 }
