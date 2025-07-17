@@ -48,7 +48,7 @@ install(TARGETS generic_host
         EXPORT generic_hostTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(EXPORT generic_hostTargets
         NAMESPACE generic_host::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/generic_host)

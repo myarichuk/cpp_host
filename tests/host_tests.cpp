@@ -2,7 +2,7 @@
 #include <csignal>
 #include <thread>
 #include <catch2/catch_all.hpp>
-#include "../src/generic_host/HostBuilder.hpp"
+#include <generic_host/HostBuilder.hpp>
 
 using namespace generic_host;
 
