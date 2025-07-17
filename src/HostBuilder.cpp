@@ -12,16 +12,16 @@ namespace generic_host {
         boost::asio::io_context io;
         boost::asio::signal_set sigs(io, SIGINT, SIGTERM);
 
-        sigs.async_wait([&](auto, int){
+        sigs.async_wait([&](auto, int) {
             io.stop();
         });
 
-        for (auto& svc : _services)
+        for (auto &svc: _services)
             svc->Start();
 
-        io.run();          // blocks; CTRL-C calls stop()
+        io.run(); // blocks; CTRL-C calls stop()
 
-        for (auto& svc : _services)
+        for (auto &svc: _services)
             svc->Stop();
 
         return 0;

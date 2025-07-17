@@ -36,10 +36,13 @@ target_link_libraries(log_indexer_example PRIVATE generic_host)
 if(GH_BUILD_TESTS)
     enable_testing()
     find_package(Catch2 REQUIRED)
+
     file(GLOB_RECURSE GH_TEST_SOURCES CONFIGURE_DEPENDS tests/*.cpp)
     add_executable(generic_host_tests ${GH_TEST_SOURCES})
     target_link_libraries(generic_host_tests PRIVATE generic_host Catch2::Catch2WithMain)
-    add_test(NAME generic_host_tests COMMAND generic_host_tests)
+
+    include(Catch)
+    catch_discover_tests(generic_host_tests)
 endif()
 
 # -- Install & CPack -------------------------------

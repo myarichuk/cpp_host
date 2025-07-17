@@ -15,7 +15,7 @@ public:
     void Stop() override { stopped = true; }
 };
 
-TEST_CASE("Host starts and stops services") {
+TEST_CASE("Host should successfully start and stops services") {
     auto service = std::make_shared<DummyService>();
 
     HostBuilder builder;
