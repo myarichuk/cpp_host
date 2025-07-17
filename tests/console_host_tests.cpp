@@ -31,7 +31,7 @@ public:
 };
 
 
-TEST_CASE("ConsoleHost should properly execute services") {
+TEST_CASE("ConsoleHost should execute services") {
     auto logger = std::make_shared<MockLogger>();
     ConsoleHost host(logger);
 
@@ -48,7 +48,7 @@ TEST_CASE("ConsoleHost should properly execute services") {
     REQUIRE(logger->ContainsMessage(LogLevel::Info, "Console Host stopped"));
 }
 
-TEST_CASE("ConsoleHost should properly handle exceptions") {
+TEST_CASE("ConsoleHost should handle exceptions") {
     auto logger = std::make_shared<MockLogger>();
     ConsoleHost host(logger);
 
@@ -63,7 +63,7 @@ TEST_CASE("ConsoleHost should properly handle exceptions") {
     REQUIRE(logger->ContainsMessage(LogLevel::Error, "Stack trace:"));
 }
 
-TEST_CASE("ConsoleHost should properly handle unknown exceptions") {
+TEST_CASE("ConsoleHost should handle unknown exceptions") {
     auto logger = std::make_shared<MockLogger>();
     ConsoleHost host(logger);
 
