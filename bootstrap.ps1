@@ -3,6 +3,22 @@ $ErrorActionPreference = "Stop"
 $vcpkgDir = "external/vcpkg"
 $toolchainFile = "$vcpkgDir\scripts\buildsystems\vcpkg.cmake"
 
+if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+    Write-Host ">>> Installing Python..."
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        winget install --id Python.Python.3 -e --source winget
+    }
+    else {
+        Write-Host "Python is required but winget is not available. Please install Python manually." -ForegroundColor Red
+        exit 1
+    }
+}
+
+if (-not (Get-Command conan -ErrorAction SilentlyContinue)) {
+    Write-Host ">>> Installing Conan..."
+    python -m pip install --user conan
+}
+
 Write-Host ">>> Bootstrapping vcpkg..."
 
 # Clone if needed

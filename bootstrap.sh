@@ -43,6 +43,37 @@ install_packages() {
     esac
 }
 
+install_python() {
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo ">>> Installing Python..."
+        case "$OS_TYPE" in
+            linux)
+                sudo apt-get update
+                sudo apt-get install -y python3 python3-pip
+                ;;
+            macos)
+                brew install python
+                ;;
+        esac
+    fi
+}
+
+install_conan() {
+    if ! command -v conan >/dev/null 2>&1; then
+        echo ">>> Installing Conan..."
+        case "$OS_TYPE" in
+            linux)
+                sudo apt-get install -y python3-pip
+                python3 -m pip install --user conan
+                ;;
+            macos)
+                brew install python || true
+                python3 -m pip install --user conan
+                ;;
+        esac
+    fi
+}
+
 realpath_f() {
     if command -v realpath >/dev/null 2>&1; then
         realpath "$1"
@@ -56,6 +87,8 @@ EOF
 
 detect_os
 install_packages
+install_python
+install_conan
 
 echo ">>> Bootstrapping vcpkg..."
 
