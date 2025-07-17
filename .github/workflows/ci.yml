@@ -59,7 +59,7 @@ jobs:
       - name: Build
         run: cmake --build build/windows-msvc --parallel --config Release
       - name: Test
-        run: ctest --test-dir build/windows-msvc --output-on-failure --config Release
+        run: ctest --test-dir build/windows-msvc --output-on-failure -C Release
 
   macos:
     runs-on: macos-14
