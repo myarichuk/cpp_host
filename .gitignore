@@ -102,6 +102,5 @@ Desktop.ini
 /.cmake/api/v1/reply/target-ZERO_CHECK-Release-bd2177acdfe8e8283750.json
 /.cmake/api/v1/reply/target-ZERO_CHECK-RelWithDebInfo-bd2177acdfe8e8283750.json
 /.cmake/api/v1/reply/toolchains-v1-114a4743af69e9d84e95.json
-/Testing/Temporary/CTestCostData.txt
-/Testing/Temporary/LastTest.log
+/Testing
 /vcpkg_installed/
