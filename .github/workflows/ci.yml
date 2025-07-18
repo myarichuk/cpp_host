@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Init submodules
         run: git submodule update --init --recursive
       - name: Setup .NET
@@ -38,6 +40,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Init submodules
         run: git submodule update --init --recursive
       - name: Setup .NET
@@ -69,6 +73,8 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Init submodules
         run: git submodule update --init --recursive
       - name: Setup .NET
@@ -98,6 +104,8 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Init submodules
         run: git submodule update --init --recursive
       - name: Setup .NET
