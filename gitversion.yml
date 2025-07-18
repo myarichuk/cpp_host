@@ -5,3 +5,8 @@ branches:
     tag: ''
     increment: Minor
     is-mainline: true
+  master:
+    regex: ^master$
+    tag: ''
+    increment: Minor
+    is-mainline: true
