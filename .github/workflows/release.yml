@@ -31,7 +31,9 @@ jobs:
           output-file: CHANGELOG.md
           skip-on-empty: false
       - name: Configure
-        run: cmake --preset linux-gcc -DGITVERSION_SEMVER=${{ steps.gitversion.outputs.semVer }}
+        run: cmake --preset linux-gcc
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
       - name: Build
         run: cmake --build build/linux-gcc --parallel
       - name: Package

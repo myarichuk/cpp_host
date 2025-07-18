@@ -30,7 +30,9 @@ jobs:
           vcpkgDirectory: "${{ runner.temp }}/vcpkg"
           vcpkgJsonGlob: "vcpkg.json"
       - name: Configure
-        run: cmake --preset linux-gcc -DGITVERSION_SEMVER=${{ steps.gitversion.outputs.semVer }}
+        run: cmake --preset linux-gcc
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
       - name: Build
         run: cmake --build build/linux-gcc --parallel
       - name: Test
@@ -63,7 +65,9 @@ jobs:
           vcpkgDirectory: "${{ runner.temp }}/vcpkg"
           vcpkgJsonGlob: "vcpkg.json"
       - name: Configure
-        run: cmake --preset linux-clang -DGITVERSION_SEMVER=${{ steps.gitversion.outputs.semVer }}
+        run: cmake --preset linux-clang
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
       - name: Build
         run: cmake --build build/linux-clang --parallel
       - name: Test
@@ -94,7 +98,9 @@ jobs:
           vcpkgDirectory: "${{ runner.temp }}/vcpkg"
           vcpkgJsonGlob: "vcpkg.json"
       - name: Configure
-        run: cmake --preset windows-msvc -DGITVERSION_SEMVER=${{ steps.gitversion.outputs.semVer }}
+        run: cmake --preset windows-msvc
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
       - name: Build
         run: cmake --build build/windows-msvc --parallel --config Release
       - name: Test
@@ -129,7 +135,9 @@ jobs:
           vcpkgDirectory: "${{ runner.temp }}/vcpkg"
           vcpkgJsonGlob: "vcpkg.json"
       - name: Configure
-        run: cmake --preset macos -DGITVERSION_SEMVER=${{ steps.gitversion.outputs.semVer }}
+        run: cmake --preset macos
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
       - name: Build
         run: cmake --build build/macos --parallel
       - name: Test
