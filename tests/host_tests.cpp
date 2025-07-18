@@ -2,7 +2,8 @@
 #include <csignal>
 #include <thread>
 #include <catch2/catch_all.hpp>
-#include <generic_host/HostBuilder.hpp>
+#include <generic_host/HostBuilder.h>
+#include <generic_host/Host.h>
 
 using namespace generic_host;
 
@@ -11,7 +12,7 @@ public:
     bool started = false;
     bool stopped = false;
 
-    void Start() override { started = true; }
+    void Start(boost::asio::io_context &io) override { started = true; }
     void Stop() override { stopped = true; }
 };
 

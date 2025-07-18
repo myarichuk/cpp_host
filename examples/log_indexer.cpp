@@ -1,13 +1,15 @@
-#include <generic_host/HostBuilder.hpp>
+#include <generic_host/HostBuilder.h>
+#include <generic_host/Host.h>
 #include <generic_host/IHostedService.hpp>
 #include <spdlog/spdlog.h>
 #include <memory>
+
 
 using namespace generic_host;
 
 class LogIndexerService : public IHostedService {
 public:
-    void Start() override {
+    void Start(boost::asio::io_context& io) override {
         spdlog::info("LogIndexerService started.");
         // Simulate background tasks
     }
