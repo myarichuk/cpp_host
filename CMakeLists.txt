@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.24)
-project(generic_host_cpp VERSION 0.1.0 LANGUAGES CXX)
+
+if(DEFINED ENV{GITVERSION_SEMVER})
+    set(PROJECT_VERSION $ENV{GITVERSION_SEMVER})
+else()
+    set(PROJECT_VERSION 0.1.0)
+endif()
+
+project(generic_host_cpp VERSION ${PROJECT_VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -59,5 +66,8 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION ${CMAKE_INSTA
 install(EXPORT generic_hostTargets
         NAMESPACE generic_host::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/generic_host)
+
+set(CPACK_PACKAGE_NAME "generic_host")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
 
 include(CPack)

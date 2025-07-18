@@ -1,0 +1,43 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.x'
+      - name: Install GitVersion
+        uses: GitTools/actions/gitversion/setup@v0
+        with:
+          versionSpec: '5.x'
+      - name: Determine version
+        id: gitversion
+        uses: GitTools/actions/gitversion/execute@v0
+      - name: Generate changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          output-file: CHANGELOG.md
+          skip-on-empty: false
+      - name: Configure
+        run: cmake --preset linux-gcc -DGITVERSION_SEMVER=${{ steps.gitversion.outputs.semVer }}
+      - name: Build
+        run: cmake --build build/linux-gcc --parallel
+      - name: Package
+        run: cpack --config build/linux-gcc/CPackConfig.cmake
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.gitversion.outputs.semVer }}
+          files: build/linux-gcc/*.tar.gz
