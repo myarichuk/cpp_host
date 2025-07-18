@@ -107,21 +107,62 @@ detect_os() {
   esac
 }
 
-# ----------------------------------------
-# Install packages
-# ----------------------------------------
+bootstrap_vcpkg() {
+  if [[ "$NO_VCPKG_BOOTSTRAP" == true ]]; then
+    log "Skipping vcpkg bootstrap (user requested)."
+    return
+  fi
+
+  log "Checking vcpkg..."
+
+  if [[ -d "$VCPKG_DIR/.git" && -f .gitmodules ]]; then
+    log "vcpkg appears to be a submodule. Running submodule update..."
+    git submodule update --init --recursive
+  elif [[ ! -d "$VCPKG_DIR" ]]; then
+    log "Cloning vcpkg..."
+    git clone https://github.com/microsoft/vcpkg.git "$VCPKG_DIR"
+    (cd "$VCPKG_DIR" && git submodule update --init --recursive)
+  fi
+
+  if [[ -f "$VCPKG_DIR/scripts/bootstrap.sh" || -f "$VCPKG_DIR/bootstrap-vcpkg.sh" ]]; then
+    if [[ ! -x "$VCPKG_DIR/vcpkg" ]]; then
+      log "Bootstrapping vcpkg..."
+      (cd "$VCPKG_DIR" && ./bootstrap-vcpkg.sh -disableMetrics)
+    else
+      log "vcpkg binary already exists. Skipping bootstrap."
+    fi
+  else
+    log "vcpkg directory exists, but no bootstrap script found. Something is very wrong."
+    exit 1
+  fi
+}
+
 install_packages() {
+  local PKGS=()
   case "$OS_TYPE" in
     linux_apt)
-      sudo apt-get update -qq
-      sudo apt-get install -y git build-essential cmake curl pkg-config unzip tar python3 python3-pip
+      log "Installing packages via apt..."
+      REQUIRED=(git build-essential cmake curl pkg-config unzip tar python3 python3-pip)
+      for pkg in "${REQUIRED[@]}"; do
+        dpkg -s "$pkg" &>/dev/null || PKGS+=("$pkg")
+      done
+      [[ "${#PKGS[@]}" -gt 0 ]] && sudo apt-get update -qq && sudo apt-get install -y "${PKGS[@]}" || log "All required packages already installed."
       ;;
     linux_dnf)
-      sudo dnf install -y git cmake curl make gcc-c++ pkgconf-pkg-config unzip tar python3 python3-pip
+      log "Installing packages via dnf..."
+      REQUIRED=(git cmake curl make gcc-c++ pkgconf-pkg-config unzip tar python3 python3-pip)
+      for pkg in "${REQUIRED[@]}"; do
+        rpm -q "$pkg" &>/dev/null || PKGS+=("$pkg")
+      done
+      [[ "${#PKGS[@]}" -gt 0 ]] && sudo dnf install -y "${PKGS[@]}" || log "All required packages already installed."
       ;;
     macos)
-      brew update
-      brew install git cmake curl python autoconf automake libtool pkg-config ninja
+      log "Installing packages via Homebrew..."
+      REQUIRED=(git cmake curl python autoconf automake libtool pkg-config ninja)
+      for pkg in "${REQUIRED[@]}"; do
+        brew list "$pkg" &>/dev/null || PKGS+=("$pkg")
+      done
+      [[ "${#PKGS[@]}" -gt 0 ]] && brew install "${PKGS[@]}" || log "All required packages already installed."
       ;;
   esac
 }
@@ -130,16 +171,31 @@ install_packages() {
 # Python & Conan
 # ----------------------------------------
 install_conan() {
-  if ! command -v conan &>/dev/null; then
-    log "Installing Conan via pip3..."
-    if command -v pip3 &>/dev/null; then
-      pip3 install --upgrade --user conan
-      export PATH="$HOME/.local/bin:$PATH"
-    else
-      echo "pip3 not found. Please install Python3/pip first." >&2
-      exit 1
-    fi
+  if command -v conan &>/dev/null; then
+    log "Conan already installed. Skipping."
+    return
   fi
+
+  case "$OS_TYPE" in
+    macos)
+      log "Installing Conan via Homebrew..."
+      brew install conan
+      ;;
+    linux_apt|linux_dnf)
+      log "Installing Conan via pip3 (user)..."
+      if command -v pip3 &>/dev/null; then
+        pip3 install --user --upgrade conan
+        export PATH="$HOME/.local/bin:$PATH"
+      else
+        echo "pip3 not found. Please install Python3/pip first." >&2
+        exit 1
+      fi
+      ;;
+    *)
+      echo "Unsupported OS for Conan installation." >&2
+      exit 1
+      ;;
+  esac
 }
 
 # ----------------------------------------
@@ -162,22 +218,10 @@ EOF
 detect_os
 install_packages
 install_conan
+bootstrap_vcpkg
 
 [[ "$CLEAN_BUILD" == true ]] && log "Cleaning build dir..." && rm -rf "$BUILD_DIR"
 
-# Bootstrap vcpkg
-if [[ "$NO_VCPKG_BOOTSTRAP" == false ]]; then
-  log "Bootstrapping vcpkg..."
-  if [[ ! -d "$VCPKG_DIR/.git" ]]; then
-    git clone --depth=1 https://github.com/microsoft/vcpkg.git "$VCPKG_DIR"
-    (cd "$VCPKG_DIR" && git submodule update --init --recursive --depth=1)
-  fi
-  if [[ ! -x "$VCPKG_DIR/vcpkg" ]]; then
-    "$VCPKG_DIR/bootstrap-vcpkg.sh" -disableMetrics
-  else
-    log "vcpkg already bootstrapped. Skipping."
-  fi
-fi
 
 VCPKG_ROOT="$(realpath_f "$VCPKG_DIR")"
 export VCPKG_ROOT
@@ -187,8 +231,13 @@ export VCPKG_ROOT
 # ----------------------------------------
 if [[ -f "CMakePresets.json" ]]; then
   log "Detected CMakePresets.json. Using presets."
-  cmake --preset "$BUILD_TYPE"
-  cmake --build --preset "$BUILD_TYPE" --parallel "$CONCURRENCY"
+  case "$OS_TYPE" in
+    macos) CMAKE_PRESET_NAME="macos" ;;
+    linux_apt|linux_dnf) CMAKE_PRESET_NAME="linux-gcc" ;;
+    *) echo "Unsupported OS type: $OS_TYPE" >&2; exit 1 ;;
+  esac
+  cmake --preset "$CMAKE_PRESET_NAME"
+  cmake --build --preset "$CMAKE_PRESET_NAME" --parallel "$CONCURRENCY"
 else
   log "Configuring CMake manually..."
   cmake -S . -B "$BUILD_DIR" \
