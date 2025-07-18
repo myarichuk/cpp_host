@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.24)
 
+set(FULL_VERSION 0.1.0)
 if(DEFINED ENV{GITVERSION_SEMVER})
-    set(PROJECT_VERSION $ENV{GITVERSION_SEMVER})
-else()
-    set(PROJECT_VERSION 0.1.0)
+    set(FULL_VERSION $ENV{GITVERSION_SEMVER})
 endif()
+
+string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" PROJECT_VERSION "${FULL_VERSION}")
 
 project(generic_host_cpp VERSION ${PROJECT_VERSION} LANGUAGES CXX)
 
@@ -68,6 +69,6 @@ install(EXPORT generic_hostTargets
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/generic_host)
 
 set(CPACK_PACKAGE_NAME "generic_host")
-set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_VERSION ${FULL_VERSION})
 
 include(CPack)
