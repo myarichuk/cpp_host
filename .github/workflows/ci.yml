@@ -9,8 +9,21 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Init submodules
         run: git submodule update --init --recursive
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.x'
+      - name: Install GitVersion
+        uses: GitTools/actions/gitversion/setup@v0
+        with:
+          versionSpec: '5.x'
+      - name: Determine version
+        id: gitversion
+        uses: GitTools/actions/gitversion/execute@v0
       - name: Set up vcpkg
         uses: lukka/run-vcpkg@v11
         with:
@@ -18,6 +31,8 @@ jobs:
           vcpkgJsonGlob: "vcpkg.json"
       - name: Configure
         run: cmake --preset linux-gcc
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
       - name: Build
         run: cmake --build build/linux-gcc --parallel
       - name: Test
@@ -27,8 +42,21 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Init submodules
         run: git submodule update --init --recursive
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.x'
+      - name: Install GitVersion
+        uses: GitTools/actions/gitversion/setup@v0
+        with:
+          versionSpec: '5.x'
+      - name: Determine version
+        id: gitversion
+        uses: GitTools/actions/gitversion/execute@v0
       - name: Install Clang
         run: sudo apt-get update && sudo apt-get install -y clang
       - name: Set up vcpkg
@@ -38,6 +66,8 @@ jobs:
           vcpkgJsonGlob: "vcpkg.json"
       - name: Configure
         run: cmake --preset linux-clang
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
       - name: Build
         run: cmake --build build/linux-clang --parallel
       - name: Test
@@ -47,8 +77,21 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Init submodules
         run: git submodule update --init --recursive
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.x'
+      - name: Install GitVersion
+        uses: GitTools/actions/gitversion/setup@v0
+        with:
+          versionSpec: '5.x'
+      - name: Determine version
+        id: gitversion
+        uses: GitTools/actions/gitversion/execute@v0
       - name: Set up vcpkg
         uses: lukka/run-vcpkg@v11
         with:
@@ -56,6 +99,8 @@ jobs:
           vcpkgJsonGlob: "vcpkg.json"
       - name: Configure
         run: cmake --preset windows-msvc
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
       - name: Build
         run: cmake --build build/windows-msvc --parallel --config Release
       - name: Test
@@ -65,8 +110,21 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Init submodules
         run: git submodule update --init --recursive
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.x'
+      - name: Install GitVersion
+        uses: GitTools/actions/gitversion/setup@v0
+        with:
+          versionSpec: '5.x'
+      - name: Determine version
+        id: gitversion
+        uses: GitTools/actions/gitversion/execute@v0
       - name: Install dependencies
         run: |
           brew update
@@ -78,6 +136,8 @@ jobs:
           vcpkgJsonGlob: "vcpkg.json"
       - name: Configure
         run: cmake --preset macos
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
       - name: Build
         run: cmake --build build/macos --parallel
       - name: Test

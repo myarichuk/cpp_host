@@ -30,3 +30,12 @@ conan create . --output-folder=conan_build
 ```
 
 This will build the library and export a Conan package that can be uploaded to your preferred remote.
+
+## Releases
+
+Versions are generated automatically using [GitVersion](https://gitversion.net/) and
+release notes are created from Conventional Commits. A GitHub Actions workflow
+builds the project, packages the artifacts with CPack and publishes a release
+whenever a tag matching `v*.*.*` is pushed.
+
+See [CHANGELOG.md](CHANGELOG.md) for a history of changes.
