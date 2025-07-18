@@ -10,7 +10,6 @@ BUILD_TYPE="Debug"
 BUILD_TESTS=ON
 CLEAN_BUILD=false
 NO_VCPKG_BOOTSTRAP=false
-USE_PRESETS=false
 OS_TYPE=""
 CONCURRENCY=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1)
 VERBOSE=false
@@ -180,13 +179,13 @@ if [[ "$NO_VCPKG_BOOTSTRAP" == false ]]; then
   fi
 fi
 
-export VCPKG_ROOT="$(realpath_f "$VCPKG_DIR")"
+VCPKG_ROOT="$(realpath_f "$VCPKG_DIR")"
+export VCPKG_ROOT
 
 # ----------------------------------------
 # CMake Preset or Manual
 # ----------------------------------------
 if [[ -f "CMakePresets.json" ]]; then
-  USE_PRESETS=true
   log "Detected CMakePresets.json. Using presets."
   cmake --preset "$BUILD_TYPE"
   cmake --build --preset "$BUILD_TYPE" --parallel "$CONCURRENCY"

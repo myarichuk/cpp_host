@@ -1,49 +1,66 @@
 $ErrorActionPreference = "Stop"
 
-$vcpkgDir = "external/vcpkg"
-$toolchainFile = "$vcpkgDir\scripts\buildsystems\vcpkg.cmake"
+param(
+    [string]$VcpkgDir = "external/vcpkg",
+    [string]$BuildDir = "build",
+    [string]$BuildType = "Debug",
+    [switch]$NoTests,
+    [switch]$Clean,
+    [switch]$SkipBootstrap,
+    [int]$Jobs = [Environment]::ProcessorCount,
+    [switch]$Verbose
+)
 
-if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-    Write-Host ">>> Installing Python..."
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-        winget install --id Python.Python.3 -e --source winget
-    }
-    else {
-        Write-Host "Python is required but winget is not available. Please install Python manually." -ForegroundColor Red
-        exit 1
+if ($Verbose) { $VerbosePreference = "Continue" }
+
+function Install-Conan {
+    if (-not (Get-Command conan -ErrorAction SilentlyContinue)) {
+        Write-Host ">>> Installing Conan..."
+        python -m pip install --user conan
     }
 }
 
-if (-not (Get-Command conan -ErrorAction SilentlyContinue)) {
-    Write-Host ">>> Installing Conan..."
-    python -m pip install --user conan
-}
-
-Write-Host ">>> Bootstrapping vcpkg..."
-
-# Clone if needed
-if (-not (Test-Path "$vcpkgDir\.git")) {
-    git clone https://github.com/microsoft/vcpkg.git $vcpkgDir
-    Push-Location $vcpkgDir
-    git submodule update --init --recursive
-    Pop-Location
+# Clean build directory if requested
+if ($Clean) {
+    Write-Host ">>> Cleaning build directory..."
+    Remove-Item -Recurse -Force $BuildDir -ErrorAction SilentlyContinue
 }
 
 # Bootstrap vcpkg
-& "$vcpkgDir\bootstrap-vcpkg.bat"
+if (-not $SkipBootstrap) {
+    Write-Host ">>> Bootstrapping vcpkg..."
+    if (-not (Test-Path "$VcpkgDir\.git")) {
+        git clone --depth 1 https://github.com/microsoft/vcpkg.git $VcpkgDir
+        Push-Location $VcpkgDir
+        git submodule update --init --recursive --depth 1
+        Pop-Location
+    }
+    if (-not (Test-Path "$VcpkgDir/vcpkg.exe")) {
+        & "$VcpkgDir\bootstrap-vcpkg.bat" -disableMetrics
+    }
+}
 
-# Set env var for editor support
-$env:VCPKG_ROOT = Resolve-Path "$vcpkgDir"
+$env:VCPKG_ROOT = (Resolve-Path $VcpkgDir)
+Install-Conan
 
-Write-Host ">>> Configuring CMake..."
-$toolchainFile = Resolve-Path "$vcpkgDir\scripts\buildsystems\vcpkg.cmake"
+# Determine whether to use CMakePresets.json
+$usePresets = Test-Path "CMakePresets.json"
 
-cmake -B build -S . `
-    -DCMAKE_BUILD_TYPE=Debug `
-    -DCMAKE_TOOLCHAIN_FILE="$($toolchainFile)" `
-    -DGH_BUILD_TESTS=ON
+if ($usePresets) {
+    Write-Host ">>> Detected CMakePresets.json. Using presets."
+    cmake --preset $BuildType | Out-Null
+    cmake --build --preset $BuildType --parallel $Jobs
+} else {
+    Write-Host ">>> Configuring CMake..."
+    $toolchain = Join-Path $env:VCPKG_ROOT "scripts/buildsystems/vcpkg.cmake"
+    cmake -S . -B $BuildDir `
+        -DCMAKE_BUILD_TYPE=$BuildType `
+        -DCMAKE_TOOLCHAIN_FILE=$toolchain `
+        -DGH_BUILD_TESTS=$(if ($NoTests) {"OFF"} else {"ON"}) `
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
-Write-Host ">>> Building..."
-cmake --build build --parallel
+    Write-Host ">>> Building..."
+    cmake --build $BuildDir --parallel $Jobs
+}
 
-Write-Host ">>> Done."
+Write-Host "✔ Build complete."
