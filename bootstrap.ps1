@@ -16,7 +16,13 @@ if ($Verbose) { $VerbosePreference = "Continue" }
 function Install-Conan {
     if (-not (Get-Command conan -ErrorAction SilentlyContinue)) {
         Write-Host ">>> Installing Conan..."
-        python -m pip install --user conan
+        python -m pip install --user --upgrade conan
+
+        $userBase = $(python -m site --user-base)
+        $scriptDir = Join-Path $userBase "Scripts"
+        if ($env:PATH -notlike "*$scriptDir*") {
+            $env:PATH = "$scriptDir;$env:PATH"
+        }
     }
 }
 
@@ -28,15 +34,30 @@ if ($Clean) {
 
 # Bootstrap vcpkg
 if (-not $SkipBootstrap) {
-    Write-Host ">>> Bootstrapping vcpkg..."
-    if (-not (Test-Path "$VcpkgDir\.git")) {
-        git clone --depth 1 https://github.com/microsoft/vcpkg.git $VcpkgDir
+    Write-Host ">>> Checking vcpkg..."
+
+    $isSubmodule = (Test-Path '.gitmodules') -and (Test-Path "$VcpkgDir\.git")
+    if ($isSubmodule) {
+        Write-Host ">>> vcpkg appears to be a submodule. Updating..."
+        git submodule update --init --recursive
+    } elseif (-not (Test-Path $VcpkgDir)) {
+        Write-Host ">>> Cloning vcpkg..."
+        git clone https://github.com/microsoft/vcpkg.git $VcpkgDir
         Push-Location $VcpkgDir
-        git submodule update --init --recursive --depth 1
+        git submodule update --init --recursive
         Pop-Location
     }
+
     if (-not (Test-Path "$VcpkgDir/vcpkg.exe")) {
-        & "$VcpkgDir\bootstrap-vcpkg.bat" -disableMetrics
+        if (Test-Path "$VcpkgDir\bootstrap-vcpkg.bat") {
+            Write-Host ">>> Bootstrapping vcpkg..."
+            & "$VcpkgDir\bootstrap-vcpkg.bat" -disableMetrics
+        } else {
+            Write-Error "vcpkg bootstrap script not found in $VcpkgDir"
+            exit 1
+        }
+    } else {
+        Write-Host ">>> vcpkg binary already exists. Skipping bootstrap."
     }
 }
 
