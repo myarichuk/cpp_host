@@ -25,7 +25,7 @@ TEST_CASE("Host should successfully start and stops services") {
 
     auto host = builder.Build();
 
-    std::jthread t([] {
+    std::thread t([] {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         std::raise(SIGINT); // Simulate Ctrl+C
     });
