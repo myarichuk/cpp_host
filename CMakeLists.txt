@@ -12,6 +12,7 @@ project(generic_host_cpp VERSION ${PROJECT_VERSION} LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(BOOST_DI_DIR "${CMAKE_SOURCE_DIR}/external/boost-di/include")
 
 option(GH_BUILD_TESTS "Build Catch2 tests" OFF)
 
@@ -20,6 +21,13 @@ file(GLOB_RECURSE GH_SOURCES CONFIGURE_DEPENDS
 )
 
 add_library(generic_host STATIC ${GH_SOURCES})
+
+target_include_directories(generic_host
+        PUBLIC
+        # consider the folder only at build-time, not install-time
+        $<BUILD_INTERFACE:${BOOST_DI_DIR}>
+)
+
 target_include_directories(generic_host PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
