@@ -26,13 +26,22 @@ function Install-Conan {
     }
 }
 
-# Clean build directory if requested
+function Ensure-BoostDI {
+    $boostDiPath = "external/boost-di"
+    if (-not (Test-Path $boostDiPath)) {
+        Write-Host ">>> Cloning Boost.DI..."
+        git clone https://github.com/boost-ext/di.git $boostDiPath
+    } else {
+        Write-Host ">>> Boost.DI already exists. Skipping clone."
+    }
+}
+
 if ($Clean) {
     Write-Host ">>> Cleaning build directory..."
     Remove-Item -Recurse -Force $BuildDir -ErrorAction SilentlyContinue
 }
 
-# Bootstrap vcpkg
+# bootstrap vcpkg
 if (-not $SkipBootstrap) {
     Write-Host ">>> Checking vcpkg..."
 
@@ -62,9 +71,10 @@ if (-not $SkipBootstrap) {
 }
 
 $env:VCPKG_ROOT = (Resolve-Path $VcpkgDir)
+Ensure-BoostDI
 Install-Conan
 
-# Determine whether to use CMakePresets.json
+# do we use CMakePresets.json
 $usePresets = Test-Path "CMakePresets.json"
 
 if ($usePresets) {

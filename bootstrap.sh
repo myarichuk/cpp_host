@@ -14,7 +14,6 @@ OS_TYPE=""
 CONCURRENCY=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1)
 VERBOSE=false
 
-# Colors
 GREEN="\033[0;32m"
 CYAN="\033[0;36m"
 RESET="\033[0m"
@@ -45,9 +44,6 @@ EOF
   exit 1
 }
 
-# ----------------------------------------
-# Parse CLI
-# ----------------------------------------
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -h|--help) usage ;;
@@ -77,9 +73,6 @@ echo "Skip vcpkg bs: $NO_VCPKG_BOOTSTRAP"
 echo "Jobs:          $CONCURRENCY"
 echo
 
-# ----------------------------------------
-# OS Detection
-# ----------------------------------------
 detect_os() {
   local uname_s
   uname_s="$(uname -s)"
@@ -137,6 +130,15 @@ bootstrap_vcpkg() {
   fi
 }
 
+ensure_boost_di() {
+  if [[ ! -d "external/boost-di" ]]; then
+    log "Cloning Boost.DI..."
+    git clone https://github.com/boost-ext/di.git external/boost-di
+  else
+    log "Boost.DI already exists. Skipping clone."
+  fi
+}
+
 install_packages() {
   local PKGS=()
   case "$OS_TYPE" in
@@ -167,9 +169,6 @@ install_packages() {
   esac
 }
 
-# ----------------------------------------
-# Python & Conan
-# ----------------------------------------
 install_conan() {
   if command -v conan &>/dev/null; then
     log "Conan already installed. Skipping."
@@ -198,9 +197,7 @@ install_conan() {
   esac
 }
 
-# ----------------------------------------
-# realpath fallback
-# ----------------------------------------
+# fallback!
 realpath_f() {
   if command -v realpath &>/dev/null; then
     realpath "$1"
@@ -219,6 +216,7 @@ detect_os
 install_packages
 install_conan
 bootstrap_vcpkg
+ensure_boost_di
 
 [[ "$CLEAN_BUILD" == true ]] && log "Cleaning build dir..." && rm -rf "$BUILD_DIR"
 
@@ -226,9 +224,6 @@ bootstrap_vcpkg
 VCPKG_ROOT="$(realpath_f "$VCPKG_DIR")"
 export VCPKG_ROOT
 
-# ----------------------------------------
-# CMake Preset or Manual
-# ----------------------------------------
 if [[ -f "CMakePresets.json" ]]; then
   log "Detected CMakePresets.json. Using presets."
   case "$OS_TYPE" in
