@@ -14,9 +14,29 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/external/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_BUILD_TYPE": "Release",
         "GH_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "linux-gcc-debug",
+      "inherits": "linux-gcc",
+      "displayName": "Linux GCC Debug",
+      "description": "Debug build using GCC on Linux",
+      "binaryDir": "${sourceDir}/build/linux-gcc-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "linux-gcc-relwithdebinfo",
+      "inherits": "linux-gcc",
+      "displayName": "Linux GCC RelWithDebInfo",
+      "description": "Optimized build with debug info using GCC on Linux",
+      "binaryDir": "${sourceDir}/build/linux-gcc-relwithdebinfo",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
     {
@@ -28,9 +48,29 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/external/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_BUILD_TYPE": "Release",
         "GH_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "linux-clang-debug",
+      "inherits": "linux-clang",
+      "displayName": "Linux Clang Debug",
+      "description": "Debug build using Clang on Linux",
+      "binaryDir": "${sourceDir}/build/linux-clang-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "linux-clang-relwithdebinfo",
+      "inherits": "linux-clang",
+      "displayName": "Linux Clang RelWithDebInfo",
+      "description": "Optimized build with debug info using Clang on Linux",
+      "binaryDir": "${sourceDir}/build/linux-clang-relwithdebinfo",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
     {
@@ -40,8 +80,28 @@
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build/windows-msvc",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/external/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "GH_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "windows-msvc-debug",
+      "inherits": "windows-msvc",
+      "displayName": "Windows MSVC Debug",
+      "description": "Debug build using MSVC on Windows",
+      "binaryDir": "${sourceDir}/build/windows-msvc-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-msvc-relwithdebinfo",
+      "inherits": "windows-msvc",
+      "displayName": "Windows MSVC RelWithDebInfo",
+      "description": "Optimized build with debug info using MSVC on Windows",
+      "binaryDir": "${sourceDir}/build/windows-msvc-relwithdebinfo",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
     {
@@ -51,11 +111,30 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/macos",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/external/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_BUILD_TYPE": "Release",
         "GH_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "macos-debug",
+      "inherits": "macos",
+      "displayName": "macOS Clang Debug",
+      "description": "Debug build using Clang on macOS",
+      "binaryDir": "${sourceDir}/build/macos-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "macos-relwithdebinfo",
+      "inherits": "macos",
+      "displayName": "macOS Clang RelWithDebInfo",
+      "description": "Optimized build with debug info using Clang on macOS",
+      "binaryDir": "${sourceDir}/build/macos-relwithdebinfo",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     }
   ],

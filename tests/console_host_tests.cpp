@@ -21,8 +21,8 @@ public:
     }
 
     bool ContainsMessage(const LogLevel level, const std::string &substring) const {
-        for (const auto&[level, message] : logs) {
-            if (level == level && message.find(substring) != std::string::npos) {
+        for (const auto& [entryLevel, message] : logs) {
+            if (entryLevel == level && message.find(substring) != std::string::npos) {
                 return true;
             }
         }
