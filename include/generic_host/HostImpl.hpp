@@ -27,7 +27,7 @@ namespace gh {
         }
 
     public:
-        explicit constexpr HostImpl(
+        explicit HostImpl(
             const std::shared_ptr<boost::asio::io_context> &io,
             ServiceList services,
             std::shared_ptr<IHostLifecycle> lifecycle) :
