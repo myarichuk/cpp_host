@@ -2,7 +2,7 @@
 #include <memory>
 #include <generic_host/ServiceCollection.hpp>
 
-using namespace generic_host;
+using namespace gh;
 
 struct IFoo {
     virtual int Value() const = 0;
@@ -20,6 +20,7 @@ struct Bar {
 
     int GetValue() const { return _foo->Value(); }
 };
+
 
 TEST_CASE("Should inject singleton into transient consumers", "[di]") {
     struct Foo1 : IFoo {
@@ -64,7 +65,7 @@ TEST_CASE("Should bind a specific shared_ptr instance as singleton", "[di]") {
 
     auto customFoo = std::make_shared<Foo2>();
     auto services =
-        Services{}.AddSingleton<IFoo, Foo2>(customFoo)
+        Services{}.AddSingletonInstance<IFoo, Foo2>(customFoo)
                   .AddTransient<Bar2>();
 
     auto injector = services.Build();
