@@ -7,6 +7,8 @@
     "boost-asio",
     "boost-system",
     "boost-stacktrace",
+    "yaml-cpp",
+    "cli11",
     "spdlog",
     "catch2"
   ],

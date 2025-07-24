@@ -1,27 +1,75 @@
 #pragma once
-#include <vector>
 #include <memory>
-#include <functional>
-#include <generic_host/IHostedService.hpp>
-#include <generic_host/ILogger.hpp>
+#include <CLI/CLI.hpp>
 
-namespace generic_host {
+#include "ConsoleLifecycle.h"
+#include "HostImpl.hpp"
+#include "IHostLifecycle.h"
 
-    class Host {
+namespace gh {
+    class Host;
+
+    template<typename ServiceList>
+   class HostBuilder {
+        template<typename> friend class HostBuilder;
+        ServiceList services_;
+        CLI::App app_;
+        std::shared_ptr<boost::asio::io_context> io_ = std::make_shared<boost::asio::io_context>();
+        std::shared_ptr<spdlog::logger> logger_ = nullptr;
     public:
-        explicit Host(std::vector<std::shared_ptr<IHostedService>> services);
-        int Run() const; // blocking call
+        explicit HostBuilder(int argc, char** argv)
+         : HostBuilder("Generic Host", argc, argv) { }
+        
+        explicit HostBuilder(const std::string& hostDescription, int argc, char** argv)
+            : services_{}, app_{ hostDescription } {
+
+            //TODO: properly add subcommands here
+
+            try {
+                app_.parse(argc, argv);
+            } catch (const CLI::ParseError& e) {
+                std::exit(app_.exit(e));
+            }
+        }
+
+        template<typename F>
+        auto ConfigureServices(F&& f) const {
+            auto updated = configureServices(std::forward<F>(f), services_);
+            return HostBuilder<decltype(updated)>{ std::move(updated) };
+        }
+
+        [[nodiscard]] auto Build() {
+            /*
+            if (*install) {  }
+            if (*uninstall) {  }
+            if (*run) {  }
+             */
+            // for now hardcode to console lifecycle
+            std::shared_ptr<IHostLifecycle> hostLifecycle;
+            if (!logger_) {
+                logger_ = detail::create_null_logger();
+            }
+
+            // TODO: make this proper (instantiate by flags, OS etc), for now hardcode
+            const auto lifecycle = std::make_shared<ConsoleLifecycle>(io_, logger_);
+
+            return HostImpl(io_, services_, lifecycle);
+        }
+
     private:
-        std::vector<std::shared_ptr<IHostedService>> _services;
+        explicit HostBuilder(ServiceList services)
+            : services_{ std::move(services) } {}
+
+        template<typename F, typename S>
+        static auto configureServices(F&& f, S const& existing) {
+            auto result = f(existing); // must return updated ServiceCollection
+
+            static_assert(!std::is_void_v<decltype(result)>,
+                "Service configuration lambda must return the modified ServiceCollection");
+
+            return result;
+        }
     };
 
-    class HostBuilder {
-    public:
-        HostBuilder& ConfigureServices(std::function<void(std::vector<std::shared_ptr<IHostedService>>&)> configure);
-        std::unique_ptr<Host> Build();
-
-    private:
-        std::vector<std::shared_ptr<IHostedService>> _services;
-    };
-
+    using DefaultHostBuilder = HostBuilder<ServiceCollection<>>;
 }

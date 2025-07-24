@@ -39,10 +39,17 @@ endif()
 
 find_package(Boost REQUIRED CONFIG COMPONENTS asio system)
 find_package(spdlog REQUIRED)
+find_package(CLI11 CONFIG REQUIRED)
+find_package(yaml-cpp CONFIG REQUIRED)
 
 target_link_libraries(generic_host
-        PUBLIC Boost::asio Boost::system spdlog::spdlog_header_only
-)
+        PUBLIC
+        Boost::asio
+        spdlog::spdlog_header_only
+        Boost::system
+        PRIVATE
+        yaml-cpp::yaml-cpp
+        CLI11::CLI11)
 
 if(WIN32)
     target_link_libraries(generic_host PRIVATE ws2_32)

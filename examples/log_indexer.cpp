@@ -3,8 +3,9 @@
 #include <spdlog/spdlog.h>
 #include <memory>
 
-using namespace generic_host;
+using namespace gh;
 
+/*
 class LogIndexerService : public IHostedService {
 public:
     void Start() override {
@@ -25,4 +26,8 @@ int main() {
 
     const auto host = builder.Build();
     return host->Run();
+}
+*/
+int main() {
+    return 0;
 }
