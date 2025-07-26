@@ -71,5 +71,5 @@ namespace gh {
         }
     };
 
-    using DefaultHostBuilder = HostBuilder<ServiceCollection<>>;
+    using DefaultHostBuilder = HostBuilder<int>;
 }

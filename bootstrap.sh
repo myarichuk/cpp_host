@@ -216,7 +216,6 @@ detect_os
 install_packages
 install_conan
 bootstrap_vcpkg
-ensure_boost_di
 
 [[ "$CLEAN_BUILD" == true ]] && log "Cleaning build dir..." && rm -rf "$BUILD_DIR"
 

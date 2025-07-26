@@ -71,7 +71,6 @@ if (-not $SkipBootstrap) {
 }
 
 $env:VCPKG_ROOT = (Resolve-Path $VcpkgDir)
-Ensure-BoostDI
 Install-Conan
 
 # do we use CMakePresets.json
