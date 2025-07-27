@@ -9,6 +9,7 @@
     "boost-stacktrace",
     "yaml-cpp",
     "cli11",
+    "fruit",
     "spdlog",
     "catch2"
   ],

@@ -130,14 +130,6 @@ bootstrap_vcpkg() {
   fi
 }
 
-ensure_boost_di() {
-  if [[ ! -d "external/boost-di" ]]; then
-    log "Cloning Boost.DI..."
-    git clone https://github.com/boost-ext/di.git external/boost-di
-  else
-    log "Boost.DI already exists. Skipping clone."
-  fi
-}
 
 install_packages() {
   local PKGS=()

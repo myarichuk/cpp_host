@@ -3,7 +3,6 @@
 #include <spdlog/logger.h>
 #include <spdlog/sinks/ringbuffer_sink.h>
 #include <boost/asio/steady_timer.hpp>
-/*
 using namespace gh;
 
 class FooService final : public IHostedService {
@@ -163,4 +162,3 @@ TEST_CASE("Should run multiple async services concurrently") {
     REQUIRE(heartbeatCount >= 5);
     REQUIRE(pingCount >= 3);
 }
-*/

@@ -5,6 +5,7 @@
 #include "ConsoleLifecycle.h"
 #include "HostImpl.hpp"
 #include "IHostLifecycle.h"
+#include "ServiceCollection.hpp"
 
 namespace gh {
     class Host;
@@ -71,5 +72,5 @@ namespace gh {
         }
     };
 
-    using DefaultHostBuilder = HostBuilder<int>;
+    using DefaultHostBuilder = HostBuilder<ServiceCollection>;
 }

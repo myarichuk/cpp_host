@@ -26,15 +26,6 @@ function Install-Conan {
     }
 }
 
-function Ensure-BoostDI {
-    $boostDiPath = "external/boost-di"
-    if (-not (Test-Path $boostDiPath)) {
-        Write-Host ">>> Cloning Boost.DI..."
-        git clone https://github.com/boost-ext/di.git $boostDiPath
-    } else {
-        Write-Host ">>> Boost.DI already exists. Skipping clone."
-    }
-}
 
 if ($Clean) {
     Write-Host ">>> Cleaning build directory..."

@@ -2,6 +2,8 @@
 #include <boost/asio/signal_set.hpp>
 #include "IHostedService.hpp"
 #include "IHostLifecycle.h"
+#include "ServiceCollection.hpp"
+#include <fruit/fruit.h>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/null_sink.h>
 
@@ -13,28 +15,17 @@ namespace gh {
         }
     }
 
-    /*
-    template<class F>
-    auto configureServices(F&& f) {
-        auto services = Services{}.AddSingleton(detail::create_null_logger());  // using Services = ServiceCollection<>
-        f(services);                 // mutates it
-        return services;            // return the modified collection
-    }
-*/
 
     template<class ServiceList>
     class HostImpl {
         ServiceList services_;
         std::shared_ptr<IHostLifecycle> lifecycle_;
         std::shared_ptr<boost::asio::io_context> io_;
-/*
-        [[nodiscard]] auto buildDI() const
-        {
-            return std::apply(
-                [](auto&&... f){ return di::make_injector(f()...); },
-                services_.binds);
+
+        [[nodiscard]] auto buildInjector() const {
+            auto comp = services_.buildComponent();
+            return fruit::Injector<>(comp);
         }
-        */
 
     public:
         explicit HostImpl(
@@ -47,26 +38,22 @@ namespace gh {
             lifecycle_->Shutdown();
         }
 
-        [[nodiscard]] int Run() const
-        {
-            /*
-            auto di = buildDI();
-
-            // resolve all registered IHostedService's
-            auto services = di.template create<std::vector<std::shared_ptr<IHostedService>>>();
+        [[nodiscard]] int Run() const {
+            auto injector = buildInjector();
+            auto services = injector.getMultibindings<IHostedService*>();
 
             lifecycle_->Start();
 
-            for(const auto serviceInstance : services){
+            for (auto serviceInstance : services) {
                 serviceInstance->Start(*io_);
             }
 
             lifecycle_->WaitForShutdownAsync().wait();
 
-            for(const auto serviceInstance : services){
+            for (auto serviceInstance : services) {
                 serviceInstance->Stop();
             }
-*/
+
             return 0;
         }
     };
