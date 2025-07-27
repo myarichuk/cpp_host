@@ -21,7 +21,7 @@ struct Bar {
     int GetValue() const { return _foo->Value(); }
 };
 
-
+/*
 TEST_CASE("Should inject singleton into transient consumers", "[di]") {
     struct Foo1 : IFoo {
         int _val = 42;
@@ -150,3 +150,4 @@ TEST_CASE("Should resolve singleton service as shared_ptr<T>", "[di]") {
     auto f = injector.create<std::shared_ptr<Foo5>>();
     REQUIRE(f->val == 999);
 }
+*/

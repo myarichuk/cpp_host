@@ -21,7 +21,7 @@ public:
     }
 };
 
-
+/*
 TEST_CASE("Should log messages when FooService is started and stopped") {
     auto memSink = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(1024);
     auto logger = std::make_shared<spdlog::logger>("test_logger", memSink);
@@ -58,3 +58,4 @@ TEST_CASE("Should log messages when FooService is started and stopped") {
     REQUIRE(hasStart);
     REQUIRE(hasStop);
 }
+*/

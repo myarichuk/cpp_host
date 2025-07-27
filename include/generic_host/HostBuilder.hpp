@@ -7,6 +7,12 @@
 #include "IHostLifecycle.h"
 
 namespace gh {
+    namespace detail {
+        inline auto create_null_logger() {
+            auto sink = std::make_shared<spdlog::sinks::null_sink_mt>();
+            return std::make_shared<spdlog::logger>("null_logger", sink);
+        }
+    }
     class Host;
 
     template<typename ServiceList>
