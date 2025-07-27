@@ -12,46 +12,47 @@ namespace gh {
     // Metaprogramming crap
     /* ----------------------------------------- */
 
-    template<typename... Ts>
+    template<typename... ListMembers>
    struct Typelist {};
 
-    template<typename T, typename TL>
+    template<typename TNewMember, typename TExistingList>
     struct PushBack;
 
-    template<typename T, typename... Ts>
-    struct PushBack<T, Typelist<Ts...>> {
-        using type = Typelist<Ts..., T>;
+    template<typename TNewMember, typename... TExistingList>
+    struct PushBack<TNewMember, Typelist<TExistingList...>> {
+        using Result = Typelist<TExistingList..., TNewMember>; //define PushBack resulting type
     };
 
-    template<typename TL>
+    template<typename ListMembers>
     struct ForEach;
 
-    template<typename... Ts>
-    struct ForEach<Typelist<Ts...>> {
+    template<typename... ListMembers>
+    struct ForEach<Typelist<ListMembers...>> {
         template<typename F>
         static void apply(F&& f) {
-            (f.template operator()<Ts>(), ...);
+            (f.template operator()<ListMembers>(), ...);
         }
     };
 
-    template<typename... Fs>
+    template<typename... Members>
     struct LambdaList {
-        std::tuple<Fs...> storage;
+        std::tuple<Members...> storage;
 
-        explicit LambdaList(Fs&&... fs) : storage(std::forward<Fs>(fs)...) {}
-        explicit LambdaList(std::tuple<Fs...>&& t) : storage(std::move(t)) {}
+        explicit LambdaList(Members&&... fs) : storage(std::forward<Members>(fs)...) {}
+        explicit LambdaList(std::tuple<Members...>&& t) : storage(std::move(t)) {}
 
         template<typename F>
-        void forEach(F&& f) {
+        void forEach(F&& mutator) {
             std::apply([&](auto&&... elems) {
-                (f(elems), ...);
+                (mutator(elems), ...);
             }, storage);
         }
     };
 
-    template<typename... Fs1, typename... Fs2>
-    auto pushBack(const LambdaList<Fs1...>& l1, const LambdaList<Fs2...>& l2) {
-        return LambdaList<Fs1..., Fs2...>(std::tuple_cat(l1.storage, l2.storage));
+    template<typename... LambdaList1, typename... LambdaList2>
+    auto pushBack(const LambdaList<LambdaList1...>& l1, const LambdaList<LambdaList2...>& l2) {
+        return LambdaList<LambdaList1..., LambdaList2...>(
+            std::tuple_cat(l1.storage, l2.storage));
     }
 
 
