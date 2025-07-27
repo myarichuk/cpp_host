@@ -35,7 +35,20 @@ find_package(Boost REQUIRED CONFIG COMPONENTS asio system)
 find_package(spdlog REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
-find_package(fruit CONFIG REQUIRED)
+find_package(fruit CONFIG)
+if(NOT fruit_FOUND)
+    message(STATUS "fruit package not found via find_package, using manual lookup")
+    find_path(FRUIT_INCLUDE_DIR fruit/fruit.h)
+    find_library(FRUIT_LIBRARY fruit)
+    if(FRUIT_INCLUDE_DIR AND FRUIT_LIBRARY)
+        add_library(fruit::fruit UNKNOWN IMPORTED)
+        set_target_properties(fruit::fruit PROPERTIES
+            IMPORTED_LOCATION "${FRUIT_LIBRARY}"
+            INTERFACE_INCLUDE_DIRECTORIES "${FRUIT_INCLUDE_DIR}")
+    else()
+        message(FATAL_ERROR "fruit library not found")
+    endif()
+endif()
 
 target_link_libraries(generic_host
         PUBLIC

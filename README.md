@@ -13,7 +13,9 @@ Run `./bootstrap.sh` (or `bootstrap.ps1` on Windows) to install required tools a
 The CMake build does not enable tests by default. To build and run them, configure the project with `GH_BUILD_TESTS` set to `ON`:
 
 ```bash
-cmake -S . -B build -DGH_BUILD_TESTS=ON
+cmake -S . -B build \
+  -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake \
+  -DGH_BUILD_TESTS=ON
 cmake --build build
 ctest --test-dir build --output-on-failure
 ```
