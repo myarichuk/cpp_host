@@ -13,7 +13,7 @@ namespace gh {
     /* ----------------------------------------- */
 
     template<typename... ListMembers>
-   struct Typelist {};
+    struct Typelist {};
 
     template<typename TNewMember, typename TExistingList>
     struct PushBack;
