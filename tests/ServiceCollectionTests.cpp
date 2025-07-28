@@ -111,3 +111,45 @@ TEST_CASE("AddTransient<IFoo, Foo> should allow resolving Bar with injected depe
     // under the hood, DI creates new Foo instances each time
     REQUIRE(bar1->_foo != bar2->_foo); // new IFoo (Foo) for each Bar
 }
+
+TEST_CASE("Singleton dependency with transient root should inject same instance into different root objects", "[di]") {
+    auto singletonFoo = std::make_shared<Foo>();
+
+    auto services = Services{}
+    .AddSingletonAs<IFoo>(singletonFoo)
+    .AddTransient<Bar>();
+
+    auto injector = services.Build();
+
+    auto bar1 = injector.create<std::shared_ptr<Bar>>();
+    auto bar2 = injector.create<std::shared_ptr<Bar>>();
+
+    REQUIRE(bar1 != nullptr);
+    REQUIRE(bar2 != nullptr);
+    REQUIRE(bar1 != bar2); // Because Bar is transient
+
+    REQUIRE(bar1->_foo == singletonFoo);
+    REQUIRE(bar2->_foo == singletonFoo);
+    REQUIRE(bar1->_foo == bar2->_foo); // Same IFoo injected into both
+}
+
+TEST_CASE("Both AddTransient overloads should register correctly", "[di]") {
+    auto services = Services{}
+    .AddTransient<IFoo, Foo>()
+    .AddTransient<Bar>();
+
+    auto injector = services.Build();
+
+    auto foo = injector.create<std::shared_ptr<IFoo>>();
+    auto bar = injector.create<std::shared_ptr<Bar>>();
+
+    REQUIRE(foo != nullptr);
+    REQUIRE(bar != nullptr);
+    REQUIRE(bar->_foo != nullptr);
+
+    REQUIRE(dynamic_cast<Foo*>(bar->_foo.get()) != nullptr);
+    REQUIRE(dynamic_cast<Foo*>(foo.get()) != nullptr);
+
+    REQUIRE(foo->Value() == 42);
+    REQUIRE(bar->GetValue() == 42);
+}
