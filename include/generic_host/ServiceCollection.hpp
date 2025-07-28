@@ -62,6 +62,37 @@ namespace gh {
         }
     };
 
+
+    struct SingletonScope {};
+    struct TransientScope {};
+
+    // Binding<I, Impl, Scope>
+    // ReSharper disable once CppTemplateParameterNeverUsed
+    template<typename TInterface, typename TImpl, typename TScope = TransientScope>
+    struct Binding {
+        static_assert(std::is_base_of_v<TInterface, TImpl>,
+                      "TImpl must derive from TInterface");
+
+        using Interface = TInterface;
+        using Impl = TImpl;
+        using Scope = TScope;
+    };
+
+
+    // boost::di integration
+    template<typename T>
+    struct BoostScope;
+
+    template<>
+    struct BoostScope<SingletonScope> {
+        using type = di::scopes::singleton;
+    };
+
+    template<>
+    struct BoostScope<TransientScope> {
+        using type = di::scopes::unique;
+    };
+
     template<typename TypeList, typename F>
     auto MakeLambdaList(F&& factory) {
         return MakeLambdaListImpl<TypeList, F>::make(std::forward<F>(factory));
@@ -94,10 +125,42 @@ namespace gh {
         // create a LambdaList<...> on the fly from TFactories
         FactoriesTuple factories;
 
+        template<typename TBinding>
+        static auto makeMultibinding() {
+            using TInterface = typename TBinding::Interface;
+            using TImpl = typename TBinding::Impl;
+            using TScope = typename TBinding::Scope;
+            using ScopeTag = typename BoostScope<TScope>::type;
+
+            if constexpr (std::is_same_v<TInterface, TImpl>) {
+                return di::bind<TImpl>.in(ScopeTag{});
+            }
+
+            return di::bind<TInterface>.template to<TImpl>().in(ScopeTag{});
+        }
+
+        template<typename... Bindings>
+        static auto makeInjectorFromBindings(Typelist<Bindings...>) {
+            return di::make_injector(
+                makeMultibinding<Bindings>()...
+            );
+        }
+
+        template<typename TList>
+        struct InjectorBuilder;
+
+        template<typename... Bindings>
+        struct InjectorBuilder<Typelist<Bindings...>> {
+            static auto Build() {
+                return di::make_injector(
+                    makeMultibinding<Bindings>()...
+                );
+            }
+        };
     public:
 #ifdef UNIT_TEST
         template<std::size_t Index>
-        auto& getFactory() const {
+        auto& GetFactory() const {
             return std::get<Index>(factories.storage);
         }
 #endif
@@ -105,8 +168,12 @@ namespace gh {
         ServiceCollection() = default;
         explicit ServiceCollection(FactoriesTuple f) : factories(std::move(f)) {}
 
+        auto Build() {
+            return InjectorBuilder<TBinders>::Build();
+        }
+
         template <typename TInterface, SharedPtr TImpl>
-      auto AddSingletonAs(TImpl instance) const {
+        auto AddSingletonAs(TImpl instance) const {
             static_assert(std::is_base_of_v<TInterface, typename TImpl::element_type>, "TImpl must derive from Interface");
             std::function<std::shared_ptr<TInterface>()> newFactory =
                     [instance]() -> std::shared_ptr<TInterface> { return instance; };
@@ -116,8 +183,28 @@ namespace gh {
             return ServiceCollection<TBinders, TNewFactories>(std::move(newFactories));
         }
 
+        template <SharedPtr TImpl>
+        auto AddSingleton(TImpl instance) const {
+            using T = typename TImpl::element_type;
+            std::function<std::shared_ptr<T>()> newFactory =
+                [instance]() -> std::shared_ptr<T> { return instance; };
 
+            using TNewFactories = typename PushBack<std::shared_ptr<T>, TFactories>::Result;
+            auto newFactories = concat(factories, LambdaList{std::move(newFactory)});
+            return ServiceCollection<TBinders, TNewFactories>(std::move(newFactories));
+        }
 
+        template <typename TInterface, typename  TImpl>
+        auto AddTransient() const {
+            using TNewBinders = typename PushBack<Binding<TInterface, TImpl>, TBinders>::Result;
+            return ServiceCollection<TNewBinders, TFactories>(factories);
+        }
+
+        template <typename  TImpl>
+        auto AddTransient() const {
+            using TNewBinders = typename PushBack<Binding<TImpl, TImpl>, TBinders>::Result;
+            return ServiceCollection<TNewBinders, TFactories>(factories);
+        }
     };
 
     using Services = ServiceCollection<>;

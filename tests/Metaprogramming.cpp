@@ -2,9 +2,6 @@
 #include <generic_host/ServiceCollection.hpp>
 #include <type_traits>
 
-template<typename A, typename B>
-constexpr bool is_same_v = std::is_same<A, B>::value;
-
 struct TypeAsserter {
     template<typename T>
     void operator()() const {
@@ -18,7 +15,7 @@ TEST_CASE("Typelist PushBack and ForEach") {
     using modifiedNumberTypes =
         gh::PushBack<double, numberTypes>::Result; // added double to the list
 
-    static_assert(is_same_v<
+    static_assert(std::is_same_v<
         modifiedNumberTypes,
         gh::Typelist<int, float, double>>, "PushBack failed");
 
