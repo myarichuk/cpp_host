@@ -1,6 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <generic_host/ServiceCollection.hpp>
 #include <type_traits>
+#include <generic_host/Meta/TypeList.hpp>
+#include <generic_host/Meta/LambdaList.hpp>
 
 struct TypeAsserter {
     template<typename T>
@@ -9,24 +11,27 @@ struct TypeAsserter {
     }
 };
 
+using namespace gh::types;
+using namespace gh::lambdas;
+
 TEST_CASE("Typelist PushBack and ForEach") {
-    using numberTypes = gh::Typelist<int, float>;
+    using numberTypes = Typelist<int, float>;
 
     using modifiedNumberTypes =
-        gh::PushBack<double, numberTypes>::Result; // added double to the list
+        PushBack<double, numberTypes>::Result; // added double to the list
 
     static_assert(std::is_same_v<
         modifiedNumberTypes,
-        gh::Typelist<int, float, double>>, "PushBack failed");
+        Typelist<int, float, double>>, "PushBack failed");
 
-    using SomeTypesList = gh::Typelist<int, float, double>;
-    gh::ForEach<SomeTypesList>::apply(TypeAsserter{});
+    using SomeTypesList = Typelist<int, float, double>;
+    ForEach<SomeTypesList>::apply(TypeAsserter{});
 }
 
 TEST_CASE("LambdaList forEach runs all lambdas ") {
     bool a = false, b = false, c = false;
 
-    gh::LambdaList list(
+    LambdaList list(
         [&] { a = true; },
         [&] { b = true; },
         [&] { c = true; }
@@ -42,10 +47,10 @@ TEST_CASE("LambdaList forEach runs all lambdas ") {
 TEST_CASE("LambdaList pushBack merges two lambda lists") {
     int x = 0;
 
-    const gh::LambdaList l1([&x] { x += 1; }, [&x] { x += 2; }) ;
-    const gh::LambdaList l2([&x] { x += 3; });
+    const LambdaList l1([&x] { x += 1; }, [&x] { x += 2; }) ;
+    const LambdaList l2([&x] { x += 3; });
 
-    auto merged = gh::concat(l1, l2);
+    auto merged = concat(l1, l2);
 
     merged.forEach([](auto& f) { f(); });
 

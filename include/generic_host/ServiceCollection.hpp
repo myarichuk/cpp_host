@@ -1,71 +1,15 @@
 #pragma once
 #include <boost/di.hpp>
+#include <functional>
+#include <generic_host/Meta/Typelist.hpp>
+#include <generic_host/Meta/LambdaList.hpp>
+#include <memory>
 #include <tuple>
 #include <type_traits>
-#include <memory>
-#include <functional>
 
 namespace di = boost::di;
 
 namespace gh {
-    // ReSharper disable once CppTemplateParameterNeverUsed
-    template<typename... ListMembers>
-    struct Typelist {};
-
-    template<typename TNewMember, typename TExistingList>
-    struct PushBack;
-
-    template<typename TNewMember, typename... TExistingList>
-    struct PushBack<TNewMember, Typelist<TExistingList...>> {
-        using Result = Typelist<TExistingList..., TNewMember>;
-    };
-
-    // Alias for PushBack to simplify usage
-    template<typename TNew, typename TList>
-    using Append = typename PushBack<TNew, TList>::Result;
-
-    template<typename ListMembers>
-    struct ForEach;
-
-    template<typename... ListMembers>
-    struct ForEach<Typelist<ListMembers...>> {
-        template<typename F>
-        static void apply(F&& f) {
-            (f.template operator()<ListMembers>(), ...);
-        }
-    };
-
-    template<typename... Members>
-    struct LambdaList {
-        std::tuple<Members...> storage;
-
-        explicit LambdaList(Members&&... fs) : storage(std::forward<Members>(fs)...) {}
-        explicit LambdaList(std::tuple<Members...>&& t) : storage(std::move(t)) {}
-
-        template<typename F>
-        void forEach(F&& mutator) {
-            std::apply([&](auto&&... elems) {
-                (mutator(elems), ...);
-            }, storage);
-        }
-    };
-
-    template<typename T>
-    struct TypeWrapper {
-        using type = T;
-    };
-
-
-    template<typename TypeList, typename F>
-    struct MakeLambdaListImpl;
-
-    template<typename... Ts, typename F>
-    struct MakeLambdaListImpl<Typelist<Ts...>, F> {
-        static auto make(F&& factory) {
-            return LambdaList{factory(TypeWrapper<Ts>{})...};
-        }
-    };
-
     struct SingletonScope {};
     struct TransientScope {};
 
@@ -96,17 +40,6 @@ namespace gh {
         using type = di::scopes::unique;
     };
 
-    template<typename TypeList, typename F>
-    auto MakeLambdaList(F&& factory) {
-        return MakeLambdaListImpl<TypeList, F>::make(std::forward<F>(factory));
-    }
-
-    template<typename... LambdaList1, typename... LambdaList2>
-    auto concat(const LambdaList<LambdaList1...>& l1, const LambdaList<LambdaList2...>& l2) {
-        return LambdaList<LambdaList1..., LambdaList2...>(
-            std::tuple_cat(l1.storage, l2.storage));
-    }
-
     // concept for shared_ptr -> kinda C# generics constraint
     template<typename T>
     concept SharedPtr = requires(T t) {
@@ -115,10 +48,10 @@ namespace gh {
                                 std::shared_ptr<typename T::element_type>>;
     };
 
-    template<typename TBinders = Typelist<>, typename TFactories = Typelist<>>
+    template<typename TBinders = types::Typelist<>, typename TFactories = types::Typelist<>>
     class ServiceCollection {
         // build lambda list types from TFactories types
-        using FactoriesTuple = decltype(MakeLambdaList<TFactories>(
+        using FactoriesTuple = decltype(lambdas::MakeLambdaList<TFactories>(
             []<typename TWrapper> (TWrapper) {
                 using T = typename TWrapper::type;
                 return std::function<T()>{};
@@ -143,7 +76,7 @@ namespace gh {
         }
 
         template<typename... Bindings>
-        static auto makeInjectorFromBindings(Typelist<Bindings...>) {
+        static auto makeInjectorFromBindings(types::Typelist<Bindings...>) {
             return di::make_injector(
                 makeMultibinding<Bindings>()...
             );
@@ -177,7 +110,7 @@ namespace gh {
         struct InjectorBuilder;
 
         template<typename... Bs>
-        struct InjectorBuilder<Typelist<Bs...>> {
+        struct InjectorBuilder<types::Typelist<Bs...>> {
             static auto Build(FactoriesTuple& factories) {
                 return std::apply([](auto&&... factoryFns) {
                     return di::make_injector(
@@ -211,8 +144,8 @@ namespace gh {
             std::function<std::shared_ptr<TInterface>()> newFactory =
                     [instance]() -> std::shared_ptr<TInterface> { return instance; };
 
-            using TNewFactories = typename PushBack<std::shared_ptr<TInterface>, TFactories>::Result;
-            auto newFactories = concat(factories, LambdaList{std::move(newFactory)});
+            using TNewFactories = typename types::PushBack<std::shared_ptr<TInterface>, TFactories>::Result;
+            auto newFactories = concat(factories, lambdas::LambdaList{std::move(newFactory)});
             return ServiceCollection<TBinders, TNewFactories>(std::move(newFactories));
         }
 
@@ -222,20 +155,20 @@ namespace gh {
             std::function<std::shared_ptr<T>()> newFactory =
                 [instance]() -> std::shared_ptr<T> { return instance; };
 
-            using TNewFactories = typename PushBack<std::shared_ptr<T>, TFactories>::Result;
-            auto newFactories = concat(factories, LambdaList{std::move(newFactory)});
+            using TNewFactories = typename types::PushBack<std::shared_ptr<T>, TFactories>::Result;
+            auto newFactories = concat(factories, lambdas::LambdaList{std::move(newFactory)});
             return ServiceCollection<TBinders, TNewFactories>(std::move(newFactories));
         }
 
         template <typename TInterface, typename  TImpl>
         auto AddTransient() const {
-            using TNewBinders = typename PushBack<Binding<TInterface, TImpl>, TBinders>::Result;
+            using TNewBinders = typename types::PushBack<Binding<TInterface, TImpl>, TBinders>::Result;
             return ServiceCollection<TNewBinders, TFactories>(factories);
         }
 
         template <typename  TImpl>
         auto AddTransient() const {
-            using TNewBinders = typename PushBack<Binding<TImpl, TImpl>, TBinders>::Result;
+            using TNewBinders = typename types::PushBack<Binding<TImpl, TImpl>, TBinders>::Result;
             return ServiceCollection<TNewBinders, TFactories>(factories);
         }
     };
