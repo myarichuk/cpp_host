@@ -20,6 +20,10 @@ namespace gh {
         using Result = Typelist<TExistingList..., TNewMember>;
     };
 
+    // Alias for PushBack to simplify usage
+    template<typename TNew, typename TList>
+    using Append = typename PushBack<TNew, TList>::Result;
+
     template<typename ListMembers>
     struct ForEach;
 
@@ -160,6 +164,15 @@ namespace gh {
             return di::bind<BindT>.to(std::move(factory));
         }
 
+        // helper to extract result type from std::function
+        template<typename TFunc>
+        struct factory_result;
+
+        template<typename TResult>
+        struct factory_result<std::function<TResult()>> {
+            using type = TResult;
+        };
+
         template<typename TList>
         struct InjectorBuilder;
 
@@ -169,7 +182,7 @@ namespace gh {
                 return std::apply([](auto&&... factoryFns) {
                     return di::make_injector(
                         makeMultibinding<Bs>()...,
-                        makeFactoryBinding<typename std::decay_t<decltype(factoryFns)>::result_type>(
+                        makeFactoryBinding<typename factory_result<std::decay_t<decltype(factoryFns)>>::type>(
                             std::forward<decltype(factoryFns)>(factoryFns)
                         )...
                     );
