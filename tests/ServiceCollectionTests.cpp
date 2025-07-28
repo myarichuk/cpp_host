@@ -68,6 +68,29 @@ TEST_CASE("AddSingleton called twice should store two factories", "[di]") {
     REQUIRE(result1 == result2);
 }
 
+TEST_CASE("AddSingleton for Foo and IFoo should resolve to the same instance", "[di]") {
+    auto instance = std::make_shared<Foo>();
+    auto services = Services{}
+    .AddSingleton(instance)
+    .AddSingletonAs<IFoo>(instance);
+
+    auto injector = services.Build();
+
+    auto resolvedFoo = injector.create<std::shared_ptr<Foo>>();
+    auto resolvedIFoo = injector.create<std::shared_ptr<IFoo>>();
+
+    REQUIRE(resolvedFoo != nullptr);
+    REQUIRE(resolvedIFoo != nullptr);
+
+    REQUIRE(resolvedFoo == instance);
+    REQUIRE(resolvedIFoo == instance);
+
+    REQUIRE(resolvedFoo == resolvedIFoo);
+
+    REQUIRE(resolvedFoo->Value() == 42);
+    REQUIRE(resolvedIFoo->Value() == 42);
+}
+
 TEST_CASE("AddTransient<IFoo, Foo> should allow resolving Bar with injected dependency", "[di]") {
     auto services = Services{}
     .AddTransient<IFoo, Foo>()

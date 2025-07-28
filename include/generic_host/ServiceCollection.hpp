@@ -62,7 +62,6 @@ namespace gh {
         }
     };
 
-
     struct SingletonScope {};
     struct TransientScope {};
 
@@ -146,17 +145,38 @@ namespace gh {
             );
         }
 
+        template<typename T>
+        struct remove_smart_ptr { using type = T; };
+
+        template<typename U>
+        struct remove_smart_ptr<std::shared_ptr<U>> { using type = U; };
+
+        template<typename T>
+        using remove_smart_ptr_t = typename remove_smart_ptr<T>::type;
+
+        template<typename TResult>
+        static auto makeFactoryBinding(std::function<TResult()> factory) {
+            using BindT = remove_smart_ptr_t<TResult>; // shared_ptr<Foo> -> Foo
+            return di::bind<BindT>.to(std::move(factory));
+        }
+
         template<typename TList>
         struct InjectorBuilder;
 
-        template<typename... Bindings>
-        struct InjectorBuilder<Typelist<Bindings...>> {
-            static auto Build() {
-                return di::make_injector(
-                    makeMultibinding<Bindings>()...
-                );
+        template<typename... Bs>
+        struct InjectorBuilder<Typelist<Bs...>> {
+            static auto Build(FactoriesTuple& factories) {
+                return std::apply([](auto&&... factoryFns) {
+                    return di::make_injector(
+                        makeMultibinding<Bs>()...,
+                        makeFactoryBinding<typename std::decay_t<decltype(factoryFns)>::result_type>(
+                            std::forward<decltype(factoryFns)>(factoryFns)
+                        )...
+                    );
+                }, factories.storage);
             }
         };
+
     public:
 #ifdef UNIT_TEST
         template<std::size_t Index>
@@ -169,7 +189,7 @@ namespace gh {
         explicit ServiceCollection(FactoriesTuple f) : factories(std::move(f)) {}
 
         auto Build() {
-            return InjectorBuilder<TBinders>::Build();
+            return InjectorBuilder<TBinders>::Build(factories);
         }
 
         template <typename TInterface, SharedPtr TImpl>
