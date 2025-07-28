@@ -1,7 +1,8 @@
 #pragma once
 #include <memory>
 #include <CLI/CLI.hpp>
-
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/null_sink.h>
 #include "ConsoleLifecycle.h"
 #include "HostImpl.hpp"
 #include "IHostLifecycle.h"
@@ -16,7 +17,7 @@ namespace gh {
     class Host;
 
     template<typename ServiceList>
-   class HostBuilder {
+    class HostBuilder {
         template<typename> friend class HostBuilder;
         ServiceList services_;
         CLI::App app_;
@@ -77,5 +78,5 @@ namespace gh {
         }
     };
 
-    using DefaultHostBuilder = HostBuilder<ServiceCollection<>>;
+    using DefaultHostBuilder = HostBuilder<Services>;
 }

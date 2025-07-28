@@ -48,7 +48,7 @@ TEST_CASE("LambdaList pushBack merges two lambda lists") {
     const gh::LambdaList l1([&x] { x += 1; }, [&x] { x += 2; }) ;
     const gh::LambdaList l2([&x] { x += 3; });
 
-    auto merged = gh::pushBack(l1, l2);
+    auto merged = gh::concat(l1, l2);
 
     merged.forEach([](auto& f) { f(); });
 
