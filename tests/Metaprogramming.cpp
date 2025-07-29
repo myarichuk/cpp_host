@@ -1,8 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <generic_host/ServiceCollection.hpp>
+#include <generic_host/meta/LambdaList.hpp>
+#include <generic_host/meta/TypeList.hpp>
 #include <type_traits>
-#include <generic_host/Meta/TypeList.hpp>
-#include <generic_host/Meta/LambdaList.hpp>
 
 struct TypeAsserter {
     template<typename T>

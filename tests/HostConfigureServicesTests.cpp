@@ -3,6 +3,8 @@
 #include <spdlog/logger.h>
 #include <spdlog/sinks/ringbuffer_sink.h>
 
+#include "generic_host/IHostedService.hpp"
+
 using namespace gh;
 
 class FooService final : public IHostedService {

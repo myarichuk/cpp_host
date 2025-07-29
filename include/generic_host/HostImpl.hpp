@@ -1,8 +1,8 @@
 #pragma once
-#include <boost/asio/signal_set.hpp>
-#include "IHostedService.hpp"
 #include "IHostLifecycle.h"
 #include "ServiceCollection.hpp"
+#include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
 
 namespace gh {
 /*
