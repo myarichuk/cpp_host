@@ -133,6 +133,36 @@ TEST_CASE("Singleton dependency with transient root should inject same instance 
     REQUIRE(bar1->_foo == bar2->_foo); // Same IFoo injected into both
 }
 
+TEST_CASE("Singleton dependency without instance but with transient root should inject same instance into different root objects", "[di]") {
+    auto services = Services{}
+    .AddSingleton<IFoo, Foo>()
+    .AddTransient<Bar>();
+
+    auto injector = services.Build();
+
+    auto bar1 = injector.create<std::shared_ptr<Bar>>();
+    auto bar2 = injector.create<std::shared_ptr<Bar>>();
+
+    REQUIRE(bar1 != nullptr);
+    REQUIRE(bar2 != nullptr);
+    REQUIRE(bar1 != bar2); // because Bar is transient
+
+    REQUIRE(bar1->_foo == bar2->_foo); // Same IFoo injected into both
+}
+
+TEST_CASE("Singleton dependency without instance and interface should always resolve the same instance", "[di]") {
+    auto services = Services{}
+    .AddSingleton<Foo>();
+
+    auto injector = services.Build();
+    auto foo1 = injector.create<std::shared_ptr<Foo>>();
+    auto foo2 = injector.create<std::shared_ptr<Foo>>();
+
+    REQUIRE(foo1 == foo2);
+    REQUIRE(foo1->Value() == 42);
+    REQUIRE(foo2->Value() == 42);
+}
+
 TEST_CASE("Both AddTransient overloads should register correctly", "[di]") {
     auto services = Services{}
     .AddTransient<IFoo, Foo>()

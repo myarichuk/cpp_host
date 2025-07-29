@@ -39,7 +39,7 @@ namespace gh::boost_helpers {
     };
 
         template<typename TBinding>
-        static auto makeMultibinding() {
+        static auto makeTypeBindings() {
             using TInterface = typename TBinding::Interface;
             using TImpl = typename TBinding::Impl;
             using TScope = typename TBinding::Scope;

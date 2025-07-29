@@ -1,12 +1,14 @@
 #pragma once
 #include <boost/di.hpp>
 #include <functional>
+#include <generic_host/meta/Boost.hpp>
 #include <generic_host/meta/LambdaList.hpp>
 #include <generic_host/meta/Typelist.hpp>
-#include <generic_host/meta/Boost.hpp>
 #include <memory>
 #include <tuple>
 #include <type_traits>
+
+#include "IHostedService.hpp"
 
 namespace di = boost::di;
 using namespace gh::boost_helpers;
@@ -18,6 +20,12 @@ namespace gh {
         typename T::element_type;
         requires std::is_same_v<std::remove_cvref_t<T>,
                                 std::shared_ptr<typename T::element_type>>;
+    };
+
+    template<typename T>
+    concept HostedService = requires(T t) {
+            typename T::element_type;
+            requires std::is_same_v<std::remove_cvref_t<T>,IHostedService>;
     };
 
     template<typename TBinders = types::Typelist<>,
@@ -43,7 +51,7 @@ namespace gh {
             static auto Build(FactoriesTuple& factories) {
                 return std::apply([](auto&&... factoryFns) {
                     return di::make_injector(
-                        makeMultibinding<Bs>()...,
+                        makeTypeBindings<Bs>()...,
                         makeFactoryBinding<
                             typename factory_result<std::decay_t<decltype(factoryFns)>>::type>(
                                 std::forward<decltype(factoryFns)>(factoryFns)
@@ -90,9 +98,32 @@ namespace gh {
         }
 
         template <typename TInterface, typename  TImpl>
+        auto AddSingleton() const {
+            using TNewBinders = typename types::PushBack<Binding<TInterface, TImpl, SingletonScope>, TBinders>::Result;
+            return ServiceCollection<TNewBinders, TMultiBinders, TFactories>(factories);
+        }
+
+        template <typename  TImpl>
+        auto AddSingleton() const {
+            using TNewBinders = typename types::PushBack<Binding<TImpl, TImpl, SingletonScope>, TBinders>::Result;
+            return ServiceCollection<TNewBinders, TMultiBinders, TFactories>(factories);
+        }
+
+        template <typename TInterface, typename  TImpl>
         auto AddTransient() const {
             using TNewBinders = typename types::PushBack<Binding<TInterface, TImpl>, TBinders>::Result;
             return ServiceCollection<TNewBinders, TMultiBinders, TFactories>(factories);
+        }
+
+        template <HostedService TImpl>
+        auto AddHostedService() const {
+            return AddMultiTransient<TImpl>();
+        }
+
+        template <typename TInterface, typename  TImpl>
+        auto AddMultiTransient() const {
+            using TNewMultiBinders = typename types::PushBack<Binding<TInterface, TImpl>, TMultiBinders>::Result;
+            return ServiceCollection<TBinders, TNewMultiBinders, TFactories>(factories);
         }
 
         template <typename  TImpl>
