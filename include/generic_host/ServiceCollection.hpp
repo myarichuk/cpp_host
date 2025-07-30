@@ -2,6 +2,7 @@
 #include <boost/di.hpp>
 #include <functional>
 #include <generic_host/meta/bindings.hpp>
+#include <generic_host/meta/multibindings.hpp>
 #include <generic_host/meta/lambdas.hpp>
 #include <generic_host/meta/factoryBindings.hpp>
 #include <memory>
