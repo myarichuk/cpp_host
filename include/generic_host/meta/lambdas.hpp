@@ -1,5 +1,5 @@
 #pragma once
-#include "Typelist.hpp"
+#include <boost/mp11.hpp>
 
 namespace gh::lambdas {
     template<typename... Members>
@@ -26,8 +26,9 @@ namespace gh::lambdas {
     template<typename TypeList, typename F>
     struct MakeLambdaListImpl;
 
+
     template<typename... Ts, typename F>
-    struct MakeLambdaListImpl<types::Typelist<Ts...>, F> {
+    struct MakeLambdaListImpl<mp_list<Ts...>, F> {
         static auto make(F&& factory) {
             return LambdaList{factory(TypeWrapper<Ts>{})...};
         }
@@ -38,9 +39,16 @@ namespace gh::lambdas {
         return MakeLambdaListImpl<TypeList, F>::make(std::forward<F>(factory));
     }
 
+
     template<typename... LambdaList1, typename... LambdaList2>
     auto concat(const LambdaList<LambdaList1...>& l1, const LambdaList<LambdaList2...>& l2) {
         return LambdaList<LambdaList1..., LambdaList2...>(
             std::tuple_cat(l1.storage, l2.storage));
+    }
+
+    template<typename TypeList, typename F>
+    auto MakeLambdaModule(F&& factory) {
+        auto list = MakeLambdaList<TypeList>(std::forward<F>(factory));
+        return std::apply(di::make_injector, getTuple(list));
     }
 }

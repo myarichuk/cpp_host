@@ -1,7 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <generic_host/ServiceCollection.hpp>
-#include <generic_host/meta/LambdaList.hpp>
-#include <generic_host/meta/TypeList.hpp>
+#include <generic_host/meta/lambdas.hpp>
 #include <type_traits>
 
 struct TypeAsserter {
@@ -11,22 +10,7 @@ struct TypeAsserter {
     }
 };
 
-using namespace gh::types;
 using namespace gh::lambdas;
-
-TEST_CASE("Typelist PushBack and ForEach") {
-    using numberTypes = Typelist<int, float>;
-
-    using modifiedNumberTypes =
-        PushBack<double, numberTypes>::Result; // added double to the list
-
-    static_assert(std::is_same_v<
-        modifiedNumberTypes,
-        Typelist<int, float, double>>, "PushBack failed");
-
-    using SomeTypesList = Typelist<int, float, double>;
-    ForEach<SomeTypesList>::apply(TypeAsserter{});
-}
 
 TEST_CASE("LambdaList forEach runs all lambdas ") {
     bool a = false, b = false, c = false;

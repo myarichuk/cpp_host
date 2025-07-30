@@ -3,9 +3,9 @@
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/null_sink.h>
-#include "ConsoleLifecycle.h"
-#include "HostImpl.hpp"
-#include "IHostLifecycle.h"
+#include <generic_host/ConsoleLifecycle.h>
+#include <generic_host/HostImpl.hpp>
+#include <generic_host/IHostLifecycle.h>
 
 namespace gh {
     namespace detail {

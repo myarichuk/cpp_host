@@ -1,6 +1,6 @@
 #pragma once
-#include "IHostLifecycle.h"
-#include "ServiceCollection.hpp"
+#include <generic_host/IHostLifecycle.h>
+#include <generic_host/ServiceCollection.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
 
