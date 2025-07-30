@@ -16,6 +16,11 @@ struct Foo : IFoo {
     [[nodiscard]] int Value() const override { return _val; }
 };
 
+struct Foo2 : IFoo {
+    int _val = 24;
+    [[nodiscard]] int Value() const override { return _val; }
+};
+
 struct Bar {
     std::shared_ptr<IFoo> _foo;
     explicit Bar(std::shared_ptr<IFoo> foo): _foo(std::move(foo)) { }
@@ -183,3 +188,14 @@ TEST_CASE("Both AddTransient overloads should register correctly", "[di]") {
     REQUIRE(foo->Value() == 42);
     REQUIRE(bar->GetValue() == 42);
 }
+
+/*
+TEST_CASE("AddSingletonMulti should properly resolve vector for multiple", "[di]") {
+    auto services = Services{}
+        .AddMultiTransient<IFoo, Foo>()
+        .AddMultiTransient<IFoo, Foo2>();
+
+    auto injector = services.Build();
+    auto fooVector = injector.create<std::vector<std::shared_ptr<IFoo>>>();
+}
+*/

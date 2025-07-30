@@ -15,18 +15,15 @@ using namespace gh::boost_helpers;
 
 namespace gh {
     // concept for shared_ptr -> kinda C# generics constraint
-    template<typename T>
-    concept SharedPtr = requires(T t) {
-        typename T::element_type;
-        requires std::is_same_v<std::remove_cvref_t<T>,
-                                std::shared_ptr<typename T::element_type>>;
+    template<typename TPtr>
+    concept SharedPtr = requires(TPtr t) {
+        typename TPtr::element_type;
+        requires std::is_same_v<std::remove_cvref_t<TPtr>,
+                                std::shared_ptr<typename TPtr::element_type>>;
     };
 
-    template<typename T>
-    concept HostedService = requires(T t) {
-            typename T::element_type;
-            requires std::is_same_v<std::remove_cvref_t<T>,IHostedService>;
-    };
+    template<typename TImpl>
+    concept HostedService = std::is_base_of_v<IHostedService, std::remove_cvref_t<TImpl>>;
 
     template<typename TBinders = types::Typelist<>,
              typename TMultiBinders = types::Typelist<>,
@@ -43,11 +40,11 @@ namespace gh {
         // create a LambdaList<...> on the fly from TFactories
         FactoriesTuple factories;
 
-        template<typename TList>
+        template<typename TBindingList, typename TMultiBindingList>
         struct InjectorBuilder;
 
-        template<typename... Bs>
-        struct InjectorBuilder<types::Typelist<Bs...>> {
+        template<typename... Bs, typename...  MBs>
+        struct InjectorBuilder<types::Typelist<Bs...>, types::Typelist<MBs...>> {
             static auto Build(FactoriesTuple& factories) {
                 return std::apply([](auto&&... factoryFns) {
                     return di::make_injector(
@@ -72,7 +69,7 @@ namespace gh {
         explicit ServiceCollection(FactoriesTuple f) : factories(std::move(f)) {}
 
         auto Build() {
-            return InjectorBuilder<TBinders>::Build(factories);
+            return InjectorBuilder<TBinders, TMultiBinders>::Build(factories);
         }
 
         template <typename TInterface, SharedPtr TImpl>
