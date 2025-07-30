@@ -1,16 +1,23 @@
 #pragma once
 #include <memory>
 #include <CLI/CLI.hpp>
-
-#include "ConsoleLifecycle.h"
-#include "HostImpl.hpp"
-#include "IHostLifecycle.h"
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/null_sink.h>
+#include <generic_host/ConsoleLifecycle.h>
+#include <generic_host/HostImpl.hpp>
+#include <generic_host/IHostLifecycle.h>
 
 namespace gh {
+    namespace detail {
+        inline auto create_null_logger() {
+            auto sink = std::make_shared<spdlog::sinks::null_sink_mt>();
+            return std::make_shared<spdlog::logger>("null_logger", sink);
+        }
+    }
     class Host;
 
     template<typename ServiceList>
-   class HostBuilder {
+    class HostBuilder {
         template<typename> friend class HostBuilder;
         ServiceList services_;
         CLI::App app_;
@@ -71,5 +78,5 @@ namespace gh {
         }
     };
 
-    using DefaultHostBuilder = HostBuilder<ServiceCollection<>>;
+    using DefaultHostBuilder = HostBuilder<Services>;
 }

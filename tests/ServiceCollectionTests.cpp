@@ -1,3 +1,4 @@
+#define UNIT_TEST
 #include <catch2/catch_test_macros.hpp>
 #include <memory>
 #include <generic_host/ServiceCollection.hpp>
@@ -5,148 +6,208 @@
 using namespace gh;
 
 struct IFoo {
-    virtual int Value() const = 0;
+    [[nodiscard]] virtual int Value() const = 0;
     virtual ~IFoo() = default;
 };
 
+// ReSharper disable once CppClassCanBeFinal
 struct Foo : IFoo {
     int _val = 42;
-    int Value() const override { return _val; }
+    [[nodiscard]] int Value() const override { return _val; }
 };
 
-struct Bar {
+struct Foo2 : IFoo {
+    int _val = 24;
+    [[nodiscard]] int Value() const override { return _val; }
+};
+
+struct Foo3 : IFoo {
+    int _val = 11;
+    [[nodiscard]] int Value() const override { return _val; }
+};
+
+struct IBar {};
+
+struct Bar: IBar {
     std::shared_ptr<IFoo> _foo;
     explicit Bar(std::shared_ptr<IFoo> foo): _foo(std::move(foo)) { }
 
-    int GetValue() const { return _foo->Value(); }
+    [[nodiscard]] int GetValue() const { return _foo->Value(); }
 };
 
+TEST_CASE("AddSingleton with an instance as interface should work", "[di]") {
+    auto instance = std::make_shared<Foo>();
+    const auto service = Services{}.AddSingletonAs<IFoo>(instance);
 
-TEST_CASE("Should inject singleton into transient consumers", "[di]") {
-    struct Foo1 : IFoo {
-        int _val = 42;
-        int Value() const override { return _val; }
-    };
+    const auto factory = service.GetFactory<0>();
+    std::shared_ptr<IFoo> result = factory();
 
-    struct Bar1 {
-        std::shared_ptr<IFoo> _foo;
-        explicit Bar1(std::shared_ptr<IFoo> foo): _foo(std::move(foo)) { }
-        int GetValue() const { return _foo->Value(); }
-    };
+    REQUIRE(result == instance); // OK: both are shared_ptr<Foo> pointing to same
+    REQUIRE(result->Value() == instance->Value());
 
-    auto services =
-        Services{}.AddSingleton<IFoo, Foo1>()
-                  .AddTransient<Bar1>();
+}
+
+TEST_CASE("AddSingleton with an instance should work", "[di]") {
+    auto instance = std::make_shared<Foo>();
+    const auto service = Services{}.AddSingleton(instance);
+
+    const auto factory = service.GetFactory<0>();
+    std::shared_ptr<Foo> result = factory();
+
+    REQUIRE(result == instance); // OK: both are shared_ptr<Foo> pointing to same
+    REQUIRE(result->Value() == instance->Value());
+
+}
+
+TEST_CASE("AddSingleton called twice should store two factories", "[di]") {
+    auto instance = std::make_shared<Foo>();
+    const auto service = Services{}
+        .AddSingleton(instance)
+        .AddSingletonAs<IFoo>(instance);
+
+    const auto factory1 = service.GetFactory<0>();
+    std::shared_ptr<Foo> result1 = factory1();
+
+    REQUIRE(result1 == instance);
+    REQUIRE(result1->Value() == instance->Value());
+
+    const auto factory2 = service.GetFactory<1>();
+    std::shared_ptr<IFoo> result2 = factory2();
+
+    REQUIRE(result2 == instance);
+    REQUIRE(result2->Value() == instance->Value());
+
+    REQUIRE(result1 == result2);
+}
+
+TEST_CASE("AddSingleton for Foo and IFoo should resolve to the same instance", "[di]") {
+    auto instance = std::make_shared<Foo>();
+    auto services = Services{}
+    .AddSingleton(instance)
+    .AddSingletonAs<IFoo>(instance);
 
     auto injector = services.Build();
 
-    auto bar1 = injector.create<std::shared_ptr<Bar1>>();
-    auto bar2 = injector.create<std::shared_ptr<Bar1>>();
+    auto resolvedFoo = injector.create<std::shared_ptr<Foo>>();
+    auto resolvedIFoo = injector.create<std::shared_ptr<IFoo>>();
+
+    REQUIRE(resolvedFoo != nullptr);
+    REQUIRE(resolvedIFoo != nullptr);
+
+    REQUIRE(resolvedFoo == instance);
+    REQUIRE(resolvedIFoo == instance);
+
+    REQUIRE(resolvedFoo == resolvedIFoo);
+
+    REQUIRE(resolvedFoo->Value() == 42);
+    REQUIRE(resolvedIFoo->Value() == 42);
+}
+
+TEST_CASE("AddTransient<IFoo, Foo> should allow resolving Bar with injected dependency", "[di]") {
+    auto services = Services{}
+    .AddTransient<IFoo, Foo>()
+    .AddTransient<Bar>();
+
+    auto injector = services.Build();
+
+    auto bar1 = injector.create<std::shared_ptr<Bar>>();
+    auto bar2 = injector.create<std::shared_ptr<Bar>>();
 
     REQUIRE(bar1 != nullptr);
     REQUIRE(bar2 != nullptr);
-    REQUIRE(bar1 != bar2); // transient => different Bar1s
+    REQUIRE(bar1 != bar2); // Transient => different Bar instances
+
     REQUIRE(bar1->GetValue() == 42);
     REQUIRE(bar2->GetValue() == 42);
-    REQUIRE(bar1->_foo == bar2->_foo); // shared singleton instance
+
+    // under the hood, DI creates new Foo instances each time
+    REQUIRE(bar1->_foo != bar2->_foo); // new IFoo (Foo) for each Bar
 }
 
-TEST_CASE("Should bind a specific shared_ptr instance as singleton", "[di]") {
-    struct Foo2 : IFoo {
-        int _val = 99;
-        int Value() const override { return _val; }
-    };
-
-    struct Bar2 {
-        std::shared_ptr<IFoo> _foo;
-        explicit Bar2(std::shared_ptr<IFoo> foo): _foo(std::move(foo)) { }
-        int GetValue() const { return _foo->Value(); }
-    };
-
-    auto customFoo = std::make_shared<Foo2>();
-    auto services =
-        Services{}.AddSingletonInstance<IFoo, Foo2>(customFoo)
-                  .AddTransient<Bar2>();
-
-    auto injector = services.Build();
-
-    auto bar = std::make_shared<Bar2>(injector.create<Bar2>());
-    REQUIRE(bar->GetValue() == 99);
-    REQUIRE(bar->_foo == customFoo);
-}
-
-struct Foo3 {
-    int id;
-    inline static int counter = 0;
-    Foo3() {
-        this->id = counter++;
-    }
-};
-
-TEST_CASE("Should return new instances for AddTransient<T>", "[di]") {
-    auto services = Services{}.AddTransient<Foo3>();
-    auto injector = services.Build();
-
-    auto foo1 = injector.create<Foo3>();
-    auto foo2 = injector.create<Foo3>();
-
-    REQUIRE(foo1.id != foo2.id);  // each instance is unique
-}
-
-struct Foo4 {
-    int id;
-    inline static int counter = 0;
-    Foo4() {
-        this->id = counter++;
-    }
-};
-
-TEST_CASE("Should return same instance for AddSingleton<T>", "[di]") {
-    auto services = Services{}.AddSingleton<Foo4>();
-    auto injector = services.Build();
-
-    auto foo1 = injector.create<std::shared_ptr<Foo4>>();
-    auto foo2 = injector.create<std::shared_ptr<Foo4>>();
-
-    REQUIRE(foo1 == foo2);          // pointer equality
-    REQUIRE(foo1->id == foo2->id);  // value equality
-}
-
-TEST_CASE("Should inject same singleton into multiple transient consumers", "[di]") {
-    struct Counter {
-        int id = 123;
-    };
-
-    struct Consumer {
-        std::shared_ptr<Counter> counter;
-        explicit Consumer(std::shared_ptr<Counter> c) : counter(std::move(c)) {}
-    };
+TEST_CASE("Singleton dependency with transient root should inject same instance into different root objects", "[di]") {
+    auto singletonFoo = std::make_shared<Foo>();
 
     auto services = Services{}
-        .AddSingleton<Counter>()
-        .AddTransient<Consumer>();
+    .AddSingletonAs<IFoo>(singletonFoo)
+    .AddTransient<Bar>();
 
     auto injector = services.Build();
 
-    auto c1 = injector.create<Consumer>();
-    auto c2 = injector.create<Consumer>();
+    auto bar1 = injector.create<std::shared_ptr<Bar>>();
+    auto bar2 = injector.create<std::shared_ptr<Bar>>();
 
-    REQUIRE(c1.counter == c2.counter);  // both consumers share the same singleton
+    REQUIRE(bar1 != nullptr);
+    REQUIRE(bar2 != nullptr);
+    REQUIRE(bar1 != bar2); // Because Bar is transient
+
+    REQUIRE(bar1->_foo == singletonFoo);
+    REQUIRE(bar2->_foo == singletonFoo);
+    REQUIRE(bar1->_foo == bar2->_foo); // Same IFoo injected into both
 }
 
-TEST_CASE("Should resolve singleton service as shared_ptr<T>", "[di]") {
-    struct Foo5 {
-        int val;
-        // should be explicit or boost::di won't initialize
-        Foo5(): val(999) {
-        }
-    };
-
+TEST_CASE("Singleton dependency without instance but with transient root should inject same instance into different root objects", "[di]") {
     auto services = Services{}
-        .AddSingleton<Foo5>();
+    .AddSingleton<IFoo, Foo>()
+    .AddTransient<Bar>();
 
     auto injector = services.Build();
 
-    auto f = injector.create<std::shared_ptr<Foo5>>();
-    REQUIRE(f->val == 999);
+    auto bar1 = injector.create<std::shared_ptr<Bar>>();
+    auto bar2 = injector.create<std::shared_ptr<Bar>>();
+
+    REQUIRE(bar1 != nullptr);
+    REQUIRE(bar2 != nullptr);
+    REQUIRE(bar1 != bar2); // because Bar is transient
+
+    REQUIRE(bar1->_foo == bar2->_foo); // Same IFoo injected into both
+}
+
+TEST_CASE("Singleton dependency without instance and interface should always resolve the same instance", "[di]") {
+    auto services = Services{}
+    .AddSingleton<Foo>();
+
+    auto injector = services.Build();
+    auto foo1 = injector.create<std::shared_ptr<Foo>>();
+    auto foo2 = injector.create<std::shared_ptr<Foo>>();
+
+    REQUIRE(foo1 == foo2);
+    REQUIRE(foo1->Value() == 42);
+    REQUIRE(foo2->Value() == 42);
+}
+
+TEST_CASE("Both AddTransient overloads should register correctly", "[di]") {
+    auto services = Services{}
+    .AddTransient<IFoo, Foo>()
+    .AddTransient<Bar>();
+
+    auto injector = services.Build();
+
+    auto foo = injector.create<std::shared_ptr<IFoo>>();
+    auto bar = injector.create<std::shared_ptr<Bar>>();
+
+    REQUIRE(foo != nullptr);
+    REQUIRE(bar != nullptr);
+    REQUIRE(bar->_foo != nullptr);
+
+    REQUIRE(dynamic_cast<Foo*>(bar->_foo.get()) != nullptr);
+    REQUIRE(dynamic_cast<Foo*>(foo.get()) != nullptr);
+
+    REQUIRE(foo->Value() == 42);
+    REQUIRE(bar->GetValue() == 42);
+}
+
+
+TEST_CASE("AddSingletonMulti should properly resolve vector for multiple", "[di]") {
+    auto services = Services{}
+        .AddMultiTransient<IFoo, Foo>()
+        .AddMultiTransient<IFoo, Foo2>()
+        .AddMultiTransient<IBar, Bar>()
+        .AddMultiTransient<IFoo, Foo3>();
+
+    const auto injector = services.Build();
+    const auto fooVector = injector.create<std::vector<std::shared_ptr<IFoo>>>();
+    const auto barVector = injector.create<std::vector<std::shared_ptr<IBar>>>();
+
+    REQUIRE(fooVector.size() == 3);
+    REQUIRE(barVector.size() == 1);
 }
