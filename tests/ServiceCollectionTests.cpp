@@ -1,7 +1,8 @@
 #define UNIT_TEST
 #include <catch2/catch_test_macros.hpp>
-#include <memory>
 #include <generic_host/ServiceCollection.hpp>
+#include <memory>
+#include <numeric>
 
 using namespace gh;
 
@@ -26,13 +27,31 @@ struct Foo3 : IFoo {
     [[nodiscard]] int Value() const override { return _val; }
 };
 
-struct IBar {};
+struct IBar {
+    [[nodiscard]] virtual int GetValue() const = 0;
+    virtual ~IBar() = default;
+};
 
 struct Bar: IBar {
     std::shared_ptr<IFoo> _foo;
     explicit Bar(std::shared_ptr<IFoo> foo): _foo(std::move(foo)) { }
 
-    [[nodiscard]] int GetValue() const { return _foo->Value(); }
+    [[nodiscard]] int GetValue() const override { return _foo->Value(); }
+};
+
+struct Bar2: IBar {
+    std::vector<std::shared_ptr<IFoo>> _fooCollection;
+    explicit Bar2(std::vector<std::shared_ptr<IFoo>> fooCollection)
+        : _fooCollection(std::move(fooCollection)) { }
+
+    [[nodiscard]] int GetValue() const override {
+        return std::accumulate( //equivalent of LINQ .Aggregate()
+            _fooCollection.begin(), _fooCollection.end(), 0,
+            [](int sum, const std::shared_ptr<IFoo>& foo) {
+                return sum + foo->Value();
+            }
+        );
+    }
 };
 
 TEST_CASE("AddSingleton with an instance as interface should work", "[di]") {
@@ -201,8 +220,9 @@ TEST_CASE("AddSingletonMulti should properly resolve vector for multiple", "[di]
     auto services = Services{}
         .AddMultiTransient<IFoo, Foo>()
         .AddMultiTransient<IFoo, Foo2>()
-        .AddMultiTransient<IBar, Bar>()
-        .AddMultiTransient<IFoo, Foo3>();
+        .AddMultiTransient<IBar, Bar2>()
+        .AddMultiTransient<IFoo, Foo3>()
+    ;
 
     const auto injector = services.Build();
     const auto fooVector = injector.create<std::vector<std::shared_ptr<IFoo>>>();
@@ -210,4 +230,9 @@ TEST_CASE("AddSingletonMulti should properly resolve vector for multiple", "[di]
 
     REQUIRE(fooVector.size() == 3);
     REQUIRE(barVector.size() == 1);
+
+    const auto expected = fooVector[0]->Value() + fooVector[1]->Value() + fooVector[2]->Value();
+    const auto actual = barVector[0]->GetValue();
+
+    REQUIRE(expected == actual);
 }

@@ -47,7 +47,7 @@ namespace gh::lambdas {
     }
 
     template<typename TypeList, typename F>
-    auto MakeLambdaModule(F&& factory) {
+    auto makeLambdaModule(F&& factory) {
         auto list = MakeLambdaList<TypeList>(std::forward<F>(factory));
         return std::apply(di::make_injector, getTuple(list));
     }

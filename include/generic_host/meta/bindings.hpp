@@ -21,7 +21,6 @@ namespace gh::boost_helpers {
         using Scope = TScope;
     };
 
-
     // boost::di integration
     template<typename T>
     struct BoostScope;
@@ -37,7 +36,7 @@ namespace gh::boost_helpers {
     };
 
     template<typename TBinding>
-    static auto makeTypeBindings() {
+    constexpr static auto makeTypeBindings() {
         using TInterface = typename TBinding::Interface;
         using TImpl = typename TBinding::Impl;
         using TScope = typename TBinding::Scope;
@@ -48,14 +47,5 @@ namespace gh::boost_helpers {
         }
 
         return di::bind<TInterface>.template to<TImpl>().in(ScopeTag{});
-    }
-
-
-
-    template<typename... Bindings>
-    static auto makeInjectorFromBindings(mp_list<Bindings...>) {
-        return di::make_injector(
-            makeTypeBindings<Bindings>()...
-        );
     }
 }

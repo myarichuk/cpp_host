@@ -1,7 +1,8 @@
 #pragma once
 #include <boost/mp11.hpp>
 #include <boost/mp11/bind.hpp>
-#include "bindings.hpp"
+#include <generic_host/meta/bindings.hpp>
+#include <boost/mp11/algorithm.hpp>
 
 using namespace boost::mp11;
 namespace gh::boost_helpers {
@@ -9,7 +10,7 @@ namespace gh::boost_helpers {
     struct MultiBindingGroup
     {
         using Interface = TInterface;
-        using Impls = TImplList;   // mp_list<Impl1, Impl2, ...>
+        using Implementations = TImplList;   // mp_list<Impl1, Impl2, ...>
     };
 
     // trait to detect specialization (default case -> false_type, correct specialization -> true_type)
@@ -49,17 +50,56 @@ namespace gh::boost_helpers {
                 TBindingList>
         >;
 
-    // mp_list<mp_list<I1, ImplA>, mp_list<I1, ImplB>, mp_list<I2, ImplC>, ...>
-    /*
-    template<class Group, class ScopeTag>
-    auto makeMultibinding() {
-        using I     = typename Group::Interface;
-        using Impls = typename Group::Impls; // mp_list<Impl1,Impl2,…>
+    // (interface + implementations) -> MultiBindingGroup
+    template<class BindingList, class Interface>
+    struct GroupForInterface
+    {
+        using type = MultiBindingGroup<
+            Interface,
+            mp_transform<
+                ImplOf,
+                mp_filter_q<
+                    // ️predicate (for the filter)
+                    mp_bind<
+                        std::is_same,
+                        mp_bind<InterfaceOf, _1>,
+                        Interface>,
+                    //list
+                    BindingList>
+            >
+        >;
+    };
 
-        return mp_apply(
-            [&](auto... ImplTs){
-                return di::bind<I*[]>.template to<ImplTs...>().in(ScopeTag{});
-            }, Impls{});
+
+    template<class BindingList>
+    using GroupedBindings =
+        mp_transform_q<
+            mp_bind_front_q<
+                mp_quote_trait<GroupForInterface>,
+                BindingList>,
+            UniqueInterfaces<BindingList>
+        >;
+
+    template<class Group, class ScopeTag>
+    constexpr auto makeMultibinding() {
+        using Interface = typename Group::Interface;
+        using ImplList  = typename Group::Implementations;
+
+        auto lambda = []<typename... Impls>(mp_list<Impls...>) {
+            return boost::di::bind<Interface*[]>
+                .template to<Impls...>()
+                .in(ScopeTag{});
+        };
+        return lambda(ImplList{});
+    }
+
+
+    /*
+    template<class ScopeTag, typename... MultiBindingGroup>
+    static auto makeInjectorFromMultiBindings(mp_list<MultiBindingGroup...>) {
+        return di::make_injector(
+            makeMultibinding<MultiBindingGroup, ScopeTag>()...
+        );
     }
     */
 }
