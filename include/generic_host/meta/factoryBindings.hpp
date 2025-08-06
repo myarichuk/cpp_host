@@ -5,7 +5,6 @@
 #include <boost/mp11/algorithm.hpp>
 
 namespace di = boost::di;
-using namespace boost::mp11;
 
 namespace gh::boost_helpers {
     template<typename T>
