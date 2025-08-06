@@ -14,6 +14,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BOOST_DI_DIR "${CMAKE_SOURCE_DIR}/external/boost-di/include")
 
+# This only applies to single-config generators like Ninja/Make
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DDEBUG -DBOOST_DI_CFG_DIAGNOSTICS_LEVEL=2)
+endif()
+
 option(GH_BUILD_TESTS "Build Catch2 tests" OFF)
 
 file(GLOB_RECURSE GH_SOURCES CONFIGURE_DEPENDS

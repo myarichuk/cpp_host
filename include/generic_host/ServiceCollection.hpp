@@ -1,4 +1,5 @@
 #pragma once
+
 #include <boost/di.hpp>
 #include <functional>
 #include <generic_host/meta/bindings.hpp>
@@ -73,6 +74,7 @@ namespace gh {
               );
             }
         };
+
     public:
 #ifdef UNIT_TEST
         template<std::size_t Index>
@@ -134,7 +136,7 @@ namespace gh {
         }
 
         template <typename TInterface, typename  TImpl>
-        auto AddMultiTransient() const {
+        auto AddMultiSingleton() const {
             using TNewMultiBinders = mp_push_back<TTransientMultiBinders, Binding<TInterface, TImpl>>;
             return ServiceCollection<TBinders, TNewMultiBinders, TFactories>(factories);
         }

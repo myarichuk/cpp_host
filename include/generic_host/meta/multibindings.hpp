@@ -86,20 +86,15 @@ namespace gh::boost_helpers {
         using ImplList  = typename Group::Implementations;
 
         auto lambda = []<typename... Impls>(mp_list<Impls...>) {
-            return boost::di::bind<Interface*[]>
-                .template to<Impls...>()
-                .in(ScopeTag{});
+            if constexpr (std::is_same_v<ScopeTag, boost::di::scopes::unique>) {
+                return boost::di::bind<Interface*[]>
+                    .template to<Impls...>();
+            } else {
+                return boost::di::bind<Interface*[]>
+                    .template to<Impls...>()
+                    .in(ScopeTag{});
+            }
         };
         return lambda(ImplList{});
     }
-
-
-    /*
-    template<class ScopeTag, typename... MultiBindingGroup>
-    static auto makeInjectorFromMultiBindings(mp_list<MultiBindingGroup...>) {
-        return di::make_injector(
-            makeMultibinding<MultiBindingGroup, ScopeTag>()...
-        );
-    }
-    */
 }

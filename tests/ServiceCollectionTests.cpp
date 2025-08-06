@@ -218,10 +218,10 @@ TEST_CASE("Both AddTransient overloads should register correctly", "[di]") {
 
 TEST_CASE("AddSingletonMulti should properly resolve vector for multiple", "[di]") {
     auto services = Services{}
-        .AddMultiTransient<IFoo, Foo>()
-        .AddMultiTransient<IFoo, Foo2>()
-        .AddMultiTransient<IBar, Bar2>()
-        .AddMultiTransient<IFoo, Foo3>()
+        .AddMultiSingleton<IFoo, Foo>()
+        .AddMultiSingleton<IFoo, Foo2>()
+        .AddMultiSingleton<IBar, Bar2>()
+        .AddMultiSingleton<IFoo, Foo3>()
     ;
 
     const auto injector = services.Build();
@@ -235,4 +235,24 @@ TEST_CASE("AddSingletonMulti should properly resolve vector for multiple", "[di]
     const auto actual = barVector[0]->GetValue();
 
     REQUIRE(expected == actual);
+}
+
+TEST_CASE("Each resolution of singleton multibindings yields the same instances", "[di]") {
+    auto services = Services{}
+    .AddMultiSingleton<IFoo, Foo>()
+    .AddMultiSingleton<IFoo, Foo2>()
+    .AddMultiSingleton<IFoo, Foo3>();
+
+    const auto injector = services.Build();
+
+    auto first = injector.create<std::vector<std::shared_ptr<IFoo>>>();
+    auto second = injector.create<std::vector<std::shared_ptr<IFoo>>>();
+
+    REQUIRE(first.size() == 3);
+    REQUIRE(second.size() == 3);
+
+    for (std::size_t i = 0; i < first.size(); ++i) {
+        REQUIRE(first[i]->Value() == second[i]->Value());
+        REQUIRE(first[i].get() == second[i].get());
+    }
 }
