@@ -6,7 +6,7 @@ namespace gh::lambdas {
     struct LambdaList {
         std::tuple<Members...> storage;
 
-        explicit LambdaList(Members&&... fs) : storage(std::forward<Members>(fs)...) {}
+        explicit LambdaList(Members&&... fs) : storage(fs...) {}
         explicit LambdaList(std::tuple<Members...>&& t) : storage(std::move(t)) {}
 
         template<typename F>

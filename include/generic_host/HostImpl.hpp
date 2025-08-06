@@ -2,18 +2,21 @@
 #include <generic_host/IHostLifecycle.h>
 #include <generic_host/ServiceCollection.hpp>
 #include <boost/asio.hpp>
+#include <spdlog/sinks/null_sink.h>
 #include <boost/asio/io_context.hpp>
 
 namespace gh {
-/*
+
     template<class F>
     auto configureServices(F&& f) {
+        auto nullSink = std::make_shared<spdlog::sinks::null_sink_mt>();
+        auto logger = std::make_shared<spdlog::logger>("null_logger", nullSink);
         auto services =
-            Services{}.AddSingletonInstance(detail::create_null_logger());  // using Services = ServiceCollection<>
+            Services{}.AddSingleton(logger);  // using Services = ServiceCollection<>
         f(services);                 // mutates it
         return services;            // return the modified collection
     }
-*/
+
     template<class ServiceList>
     class HostImpl {
         ServiceList services_;

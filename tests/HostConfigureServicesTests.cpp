@@ -32,7 +32,7 @@ TEST_CASE("Should log messages when FooService is started and stopped") {
     char* argv[] = { arg0 };
     const auto host = DefaultHostBuilder{1, argv } // empty argc and argv
             .ConfigureServices([&](auto& services) {
-            return services.AddSingletonInstance(logger)
+            return services.AddSingleton(logger)
                     .template AddHostedService<FooService>();
         })
         .Build();
