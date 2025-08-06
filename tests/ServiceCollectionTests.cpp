@@ -216,7 +216,7 @@ TEST_CASE("Both AddTransient overloads should register correctly", "[di]") {
 }
 
 
-TEST_CASE("AddSingletonMulti should properly resolve vector for multiple", "[di]") {
+TEST_CASE("AddMultiSingleton should properly resolve vector for multiple", "[di]") {
     auto services = Services{}
         .AddMultiSingleton<IFoo, Foo>()
         .AddMultiSingleton<IFoo, Foo2>()

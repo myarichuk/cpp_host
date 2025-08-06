@@ -132,7 +132,7 @@ namespace gh {
 
         template <HostedService TImpl>
         auto AddHostedService() const {
-            return AddMultiTransient<IHostedService, TImpl>();
+            return AddMultiSingleton<IHostedService, TImpl>();
         }
 
         template <typename TInterface, typename  TImpl>
