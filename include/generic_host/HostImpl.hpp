@@ -1,14 +1,18 @@
 #pragma once
-#include <boost/asio/signal_set.hpp>
-#include "IHostedService.hpp"
-#include "IHostLifecycle.h"
-#include "ServiceCollection.hpp"
+#include <generic_host/IHostLifecycle.h>
+#include <generic_host/ServiceCollection.hpp>
+#include <boost/asio.hpp>
+#include <spdlog/sinks/null_sink.h>
+#include <boost/asio/io_context.hpp>
 
 namespace gh {
+
     template<class F>
     auto configureServices(F&& f) {
+        auto nullSink = std::make_shared<spdlog::sinks::null_sink_mt>();
+        auto logger = std::make_shared<spdlog::logger>("null_logger", nullSink);
         auto services =
-            Services{}.AddSingletonInstance(detail::create_null_logger());  // using Services = ServiceCollection<>
+            Services{}.AddSingleton(logger);  // using Services = ServiceCollection<>
         f(services);                 // mutates it
         return services;            // return the modified collection
     }
@@ -19,13 +23,14 @@ namespace gh {
         std::shared_ptr<IHostLifecycle> lifecycle_;
         std::shared_ptr<boost::asio::io_context> io_;
 
+        /*
         [[nodiscard]] auto buildDI() const
         {
             return std::apply(
                 [](auto&&... f){ return di::make_injector(f()...); },
                 services_.binds);
         }
-
+        */
     public:
         explicit HostImpl(
             const std::shared_ptr<boost::asio::io_context> &io,
@@ -39,6 +44,7 @@ namespace gh {
 
         [[nodiscard]] int Run() const
         {
+/*
             auto di = buildDI();
 
             // resolve all registered IHostedService's
@@ -55,7 +61,7 @@ namespace gh {
             for(const auto serviceInstance : services){
                 serviceInstance->Stop();
             }
-
+*/
             return 0;
         }
     };
